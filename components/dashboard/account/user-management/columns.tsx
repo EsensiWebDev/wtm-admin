@@ -1,5 +1,6 @@
 "use client";
 
+import { deleteUser } from "@/app/(dashboard)/account/user-management/actions";
 import { SuperAdmin } from "@/app/(dashboard)/account/user-management/data-super-admin";
 import { UserForm } from "@/components/dashboard/account/user-management/user-form";
 import { DataTableColumnHeader } from "@/components/data-table/column-header";
@@ -41,6 +42,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { IconDotsVertical } from "@tabler/icons-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { useState } from "react";
@@ -138,135 +140,112 @@ export const columns: ColumnDef<SuperAdmin>[] = [
   {
     id: "actions",
     cell: ({ row }) => {
-      const [isDeleting, setIsDeleting] = useState(false);
+      const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
       const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+      const [isDeleting, setIsDeleting] = useState(false);
+      const queryClient = useQueryClient();
 
       const handleDelete = async () => {
         setIsDeleting(true);
         try {
-          // Simulate API call - replace with your actual API call
-          console.log("Deleting user:");
-          // Simulate network delay
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          // Simulate success response
-          const success = Math.random() > 0.2; // 80% success rate for demo
-          if (success) {
-            // onDelete(user.id);
+          const result = await deleteUser(row.original.id);
+
+          if (result.success) {
             toast.success("User deleted successfully!");
-            setIsDeleteDialogOpen(false); // Close dialog only on success
+            setIsDeleteDialogOpen(false);
+
+            // Invalidate and refetch the users query to update the data
+            await queryClient.invalidateQueries({
+              queryKey: ["users", "super-admin"],
+            });
           } else {
-            toast.error("Failed to delete user. Please try again.");
+            toast.error(result.error || "Failed to delete user");
           }
         } catch (error) {
           console.error("Error deleting user:", error);
-          toast.error("An unexpected error occurred. Please try again.");
+          toast.error("An unexpected error occurred");
         } finally {
           setIsDeleting(false);
         }
       };
 
       return (
-        <AlertDialog
-          open={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
-        >
-          <Dialog>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+        <>
+          <AlertDialog
+            open={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
+          >
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
+                    size="icon"
+                  >
+                    <IconDotsVertical />
+                    <span className="sr-only">Open menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-32">
+                  <DialogTrigger asChild>
+                    <DropdownMenuItem>Edit</DropdownMenuItem>
+                  </DialogTrigger>
+                  <DropdownMenuSeparator />
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem variant="destructive">
+                      Delete
+                    </DropdownMenuItem>
+                  </AlertDialogTrigger>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Edit User</DialogTitle>
+                  <DialogDescription>
+                    Make changes to the user profile. Click save when you're
+                    done.
+                  </DialogDescription>
+                </DialogHeader>
+                <UserForm
+                  user={row.original}
+                  open={isEditDialogOpen}
+                  onOpenChange={setIsEditDialogOpen}
+                  onSuccess={() => {
+                    // Invalidate and refetch the users query to update the data
+                    queryClient.invalidateQueries({
+                      queryKey: ["users", "super-admin"],
+                    });
+                  }}
+                />
+              </DialogContent>
+            </Dialog>
+
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete
+                  this user account and remove their data from our servers.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isDeleting}>
+                  Cancel
+                </AlertDialogCancel>
                 <Button
-                  variant="ghost"
-                  className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
-                  size="icon"
+                  type="submit"
+                  className={buttonVariants({ variant: "destructive" })}
+                  onClick={handleDelete}
+                  disabled={isDeleting}
                 >
-                  <IconDotsVertical />
-                  <span className="sr-only">Open menu</span>
+                  {isDeleting ? "Deleting..." : "Delete"}
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-32">
-                <DialogTrigger asChild>
-                  <DropdownMenuItem>Edit</DropdownMenuItem>
-                </DialogTrigger>
-                <DropdownMenuSeparator />
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuItem variant="destructive">
-                    Delete
-                  </DropdownMenuItem>
-                </AlertDialogTrigger>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Edit User</DialogTitle>
-                <DialogDescription>
-                  Make changes to the user profile. Click save when you're done.
-                </DialogDescription>
-              </DialogHeader>
-              <UserForm
-                initialData={{
-                  name: "DUMMY",
-                  email: "DUMMY",
-                  phone: "DUMMY",
-                  status: true,
-                }}
-                onSubmit={async (data: {
-                  name: string;
-                  email: string;
-                  phone: string;
-                  status: boolean;
-                }) => {
-                  try {
-                    // Simulate API call - replace with your actual API call
-                    console.log("Editing user:", data);
-
-                    // Simulate network delay
-                    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-                    // Simulate success response
-                    const success = Math.random() > 0.2; // 80% success rate for demo
-
-                    if (success) {
-                      // Call the onEdit callback if provided
-                      // onEdit(user.id, data);
-                      return true;
-                    } else {
-                      // Keep modal open on failure
-                      return false;
-                    }
-                  } catch (error) {
-                    console.error("Error editing user:", error);
-                    return false;
-                  }
-                }}
-                onCancel={() => {}}
-                submitButtonText="Save changes"
-              />
-            </DialogContent>
-          </Dialog>
-
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete your
-                account and remove your data from our servers.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>
-                Cancel
-              </AlertDialogCancel>
-              <Button
-                type="submit"
-                className={buttonVariants({ variant: "destructive" })}
-                onClick={handleDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting ? "Deleting..." : "Delete"}
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
       );
     },
   },
