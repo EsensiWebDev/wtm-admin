@@ -18,6 +18,7 @@ import {
   HelpCircle,
   Timer,
 } from "lucide-react";
+import AddSuperAdmin from "./modal-add";
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -102,10 +103,7 @@ export function DataTableToolbar<TData>({
       </div>
       <div className="flex items-center gap-2">
         <DataTableViewOptions table={table} />
-        <Button size="sm">
-          <PlusCircle />
-          Add
-        </Button>
+        <AddSuperAdmin />
       </div>
     </div>
   );

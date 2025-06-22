@@ -9,8 +9,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { CirclePlus } from "lucide-react";
-import { UserForm } from "./user-form";
 import { useState } from "react";
+import { UserForm } from "./user-form";
 
 function AddSuperAdmin() {
   const [isOpen, setIsOpen] = useState(false);
@@ -59,7 +59,7 @@ function AddSuperAdmin() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button size={"sm"}>
           <CirclePlus /> Add
         </Button>
       </DialogTrigger>

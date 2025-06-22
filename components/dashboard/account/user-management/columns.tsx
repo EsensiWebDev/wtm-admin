@@ -39,8 +39,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { IconDotsVertical } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -114,7 +116,7 @@ export const columns: ColumnDef<SuperAdmin>[] = [
               <SelectItem value="group_b">Promo Group B</SelectItem>
               <SelectItem value="group_c">Promo Group C</SelectItem>
               <SelectSeparator />
-              {/* <SelectItemLink href={"/dummy"}>Create New Group</SelectItemLink> */}
+              <SelectItemLink href={"/dummy"}>Create New Group</SelectItemLink>
             </SelectContent>
           </Select>
         </>
@@ -126,18 +128,12 @@ export const columns: ColumnDef<SuperAdmin>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="E-mail" />
     ),
-    // cell: ({ row }) => {
-    //   return row.original.email;
-    // },
   },
   {
     accessorKey: "phone",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Phone Number" />
     ),
-    // cell: ({ row }) => {
-    //   return row.original.phone;
-    // },
   },
   {
     id: "actions",
@@ -275,3 +271,21 @@ export const columns: ColumnDef<SuperAdmin>[] = [
     },
   },
 ];
+
+const SelectItemLink = ({
+  href,
+  children,
+  className,
+}: React.ComponentProps<typeof Link>) => {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "hover:bg-accent hover:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        className
+      )}
+    >
+      {children}
+    </Link>
+  );
+};

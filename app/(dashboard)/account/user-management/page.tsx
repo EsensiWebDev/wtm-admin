@@ -1,7 +1,7 @@
+import { columns } from "@/components/dashboard/account/user-management/columns";
 import { DataTable } from "@/components/data-table/data-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import React from "react";
-import { columns } from "../../../../components/dashboard/account/user-management/columns";
 import { SuperAdmin, userSuperAdmin } from "./data-super-admin";
 
 async function getData(): Promise<SuperAdmin[]> {
