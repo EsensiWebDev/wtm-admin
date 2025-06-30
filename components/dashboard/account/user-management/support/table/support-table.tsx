@@ -1,0 +1,68 @@
+"use client";
+
+import { getSuperAdminData } from "@/app/(dashboard)/account/user-management/page";
+import { Support } from "@/app/(dashboard)/account/user-management/support/types";
+import { DataTable } from "@/components/data-table/data-table";
+import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
+import { useDataTable } from "@/hooks/use-data-table";
+import type { DataTableRowAction } from "@/types/data-table";
+import React, { useTransition } from "react";
+import CreateSupportDialog from "../dialog/create-support-dialog";
+import { DeleteSupportDialog } from "../dialog/delete-support-dialog";
+import EditSupportDialog from "../dialog/edit-support-dialog";
+import { getSupportTableColumns } from "./support-columns";
+
+interface SupportTableProps {
+  promises: Promise<[Awaited<ReturnType<typeof getSuperAdminData>>]>;
+}
+
+const SupportTable = ({ promises }: SupportTableProps) => {
+  const [isPending, startTransition] = useTransition();
+  const [{ data, pageCount }] = React.use(promises);
+
+  const [rowAction, setRowAction] =
+    React.useState<DataTableRowAction<Support> | null>(null);
+
+  const columns = React.useMemo(
+    () => getSupportTableColumns({ setRowAction }),
+    []
+  );
+
+  const { table } = useDataTable({
+    data,
+    columns,
+    pageCount,
+    getRowId: (originalRow) => originalRow.id,
+    shallow: false,
+    clearOnDefault: true,
+    startTransition,
+  });
+
+  return (
+    <>
+      <div className="relative">
+        <DataTable table={table} isPending={isPending}>
+          <DataTableToolbar table={table} isPending={isPending}>
+            <CreateSupportDialog />
+          </DataTableToolbar>
+        </DataTable>
+      </div>
+      {rowAction?.variant === "update" && (
+        <EditSupportDialog
+          open={rowAction?.variant === "update"}
+          onOpenChange={() => setRowAction(null)}
+          support={rowAction?.row.original ?? null}
+        />
+      )}
+      <DeleteSupportDialog
+        open={rowAction?.variant === "delete"}
+        onOpenChange={() => setRowAction(null)}
+        support={rowAction?.row.original ? [rowAction.row.original] : []}
+        showTrigger={false}
+        onSuccess={() => rowAction?.row.toggleSelected(false)}
+      />
+    </>
+  );
+};
+
+export default SupportTable;
