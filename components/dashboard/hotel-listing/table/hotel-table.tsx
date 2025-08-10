@@ -7,11 +7,13 @@ import {
 import { Hotel } from "@/app/(dashboard)/hotel-listing/types";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
+import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { useDataTable } from "@/hooks/use-data-table";
 import type { DataTableRowAction } from "@/types/data-table";
+import { Plus } from "lucide-react";
+import Link from "next/link";
 import React, { useTransition } from "react";
-import CreateHotelDialog from "../dialog/create-hotel-dialog";
 import { DeleteHotelDialog } from "../dialog/delete-hotel-dialog";
 import EditHotelDialog from "../dialog/edit-hotel-dialog";
 import { getHotelTableColumns } from "./hotel-columns";
@@ -87,7 +89,13 @@ const HotelTable = ({ promises }: HotelTableProps) => {
           )}
         >
           <DataTableToolbar table={table} isPending={isPending}>
-            <CreateHotelDialog />
+            <Button size="sm" asChild>
+              <Link href={"/hotel-listing/create"}>
+                <Plus />
+                New Hotel
+              </Link>
+            </Button>
+            {/* <CreateHotelDialog /> */}
           </DataTableToolbar>
         </DataTable>
       </div>
