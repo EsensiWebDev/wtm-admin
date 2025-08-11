@@ -125,8 +125,6 @@ function RoomFeatures({
     text: string;
   }[];
 }) {
-  console.log({ features });
-
   const getIcon = (iconName: string) => {
     const icons = {
       Square: <Square className="h-5 w-5" />,

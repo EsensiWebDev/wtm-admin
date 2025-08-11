@@ -111,6 +111,5 @@ const mockHotel: HotelDetail = {
 };
 
 export async function fetchHotelDetail(): Promise<HotelDetail> {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
   return mockHotel;
 }

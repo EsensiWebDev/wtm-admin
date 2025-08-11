@@ -13,6 +13,17 @@ export interface NearbyPlace {
 }
 
 // =========================
+// Image Upload Types
+// =========================
+
+export interface ImageFile {
+  id: string;
+  file: File;
+  preview: string;
+  isMain: boolean;
+}
+
+// =========================
 // Hotel Detail Types
 // =========================
 
