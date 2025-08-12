@@ -1,5 +1,6 @@
 "use client";
 
+import { createHotel } from "@/app/(dashboard)/hotel-listing/actions";
 import {
   HotelDetail,
   HotelInfoProps,
@@ -8,8 +9,9 @@ import {
 } from "@/app/(dashboard)/hotel-listing/create/types";
 import { ImageUpload } from "@/components/dashboard/hotel-listing/create/image-upload";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { Loader, PlusCircle } from "lucide-react";
+import { useCallback, useMemo, useState, useTransition } from "react";
+import { toast } from "sonner";
 import { HotelInfoUpload } from "./info-upload";
 import { RoomCardInput } from "./room-card-input";
 
@@ -62,7 +64,9 @@ export function CreateHotelForm({ hotel }: CreateHotelFormProps) {
     isPromoted: hotel.isPromoted || false,
     promoText: hotel.promoText || "",
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Transition state for form submission
+  const [isPending, startTransition] = useTransition();
 
   // Memoized values
   const formIsValid = useMemo(() => {
@@ -114,72 +118,101 @@ export function CreateHotelForm({ hotel }: CreateHotelFormProps) {
       // Validate form
       const errors = validateForm(images, rooms, hotelInfo);
       if (errors.length > 0) {
-        alert(errors.join("\n"));
+        toast.error(errors.join("\n"));
         return;
       }
 
-      setIsSubmitting(true);
+      // Confirm submission
+      // const confirmed = window.confirm(
+      //   `Are you sure you want to create hotel "${hotelInfo.name}" with ${totalRooms} rooms and ${totalImages} images?`
+      // );
 
-      try {
-        // Prepare form data
-        const formData = new FormData();
+      // if (!confirmed) {
+      //   return;
+      // }
 
-        // Add images
-        images.forEach((image, index) => {
-          formData.append("images", image.file);
-          if (image.isMain) {
-            formData.append("mainImageIndex", index.toString());
-          }
-        });
+      startTransition(async () => {
+        try {
+          // Prepare form data
+          const formData = new FormData();
 
-        // Add hotel data
-        formData.append("hotelInfo", JSON.stringify(hotelInfo));
-        formData.append("rooms", JSON.stringify(rooms));
+          // Add images
+          images.forEach((image, index) => {
+            formData.append("images", image.file);
+            if (image.isMain) {
+              formData.append("mainImageIndex", index.toString());
+            }
+          });
 
-        // Create complete data object
-        const completeHotelData = {
-          images: images.map((img) => ({
-            id: img.id,
-            name: img.file.name,
-            isMain: img.isMain,
-            size: img.file.size,
-            type: img.file.type,
-          })),
-          hotelInfo: {
-            ...hotelInfo,
-            rating: Number(hotelInfo.rating),
-            price: Number(hotelInfo.price),
-          },
-          rooms: rooms.map((room) => ({
-            ...room,
-            options: room.options.map((option) => ({
-              ...option,
-              price: Number(option.price),
+          // Add hotel data
+          formData.append("hotelInfo", JSON.stringify(hotelInfo));
+          formData.append("rooms", JSON.stringify(rooms));
+
+          // Create complete data object for logging
+          const completeHotelData = {
+            images: images.map((img) => ({
+              id: img.id,
+              name: img.file.name,
+              isMain: img.isMain,
+              size: img.file.size,
+              type: img.file.type,
             })),
-          })),
-          summary: {
-            totalRooms,
-            totalImages,
-            createdAt: new Date().toISOString(),
-          },
-        };
+            hotelInfo: {
+              ...hotelInfo,
+              rating: Number(hotelInfo.rating),
+              price: Number(hotelInfo.price),
+            },
+            rooms: rooms.map((room) => ({
+              ...room,
+              options: room.options.map((option) => ({
+                ...option,
+                price: Number(option.price),
+              })),
+            })),
+            summary: {
+              totalRooms,
+              totalImages,
+              createdAt: new Date().toISOString(),
+            },
+          };
 
-        // Log data for debugging
-        console.log("=== COMPLETE FORM DATA ===", completeHotelData);
+          // Log data for debugging
+          console.log("=== COMPLETE FORM DATA ===", completeHotelData);
 
-        // TODO: Replace with actual API call
-        // const response = await fetch('/api/hotels', {
-        //   method: 'POST',
-        //   body: formData
-        // });
+          // Call the action
+          const { success, error } = await createHotel(formData);
 
-        alert("Hotel created successfully!");
-      } catch (error) {
-        console.error("Error creating hotel:", error);
-        alert("Error creating hotel. Please try again.");
-      } finally {
-        setIsSubmitting(false);
-      }
+          if (!success) {
+            toast.error(error || "Failed to create hotel");
+            return;
+          }
+
+          toast.success("Hotel created successfully!");
+
+          // Reset form
+          setImages([]);
+          setRooms([createDefaultRoom()]);
+          setHotelInfo({
+            name: "",
+            location: "",
+            rating: 0,
+            description: "",
+            facilities: [],
+            nearby: [],
+            price: 0,
+            isPromoted: false,
+            promoText: "",
+          });
+
+          // Show success message with more details
+          toast.success(
+            `Hotel "${hotelInfo.name}" created successfully with ${totalRooms} rooms and ${totalImages} images!`
+          );
+        } catch (error) {
+          console.error("Error creating hotel:", error);
+          toast.error("An unexpected error occurred. Please try again.");
+        }
+      });
     },
     [images, rooms, hotelInfo, totalRooms, totalImages]
   );
@@ -250,8 +283,15 @@ export function CreateHotelForm({ hotel }: CreateHotelFormProps) {
         <Button type="button" variant="outline" onClick={handleCancel}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isSubmitting || !formIsValid}>
-          {isSubmitting ? "Creating..." : "Create Hotel"}
+        <Button type="submit" disabled={isPending || !formIsValid}>
+          {isPending ? (
+            <>
+              <Loader className="mr-2 h-4 w-4 animate-spin" />
+              Creating...
+            </>
+          ) : (
+            "Create Hotel"
+          )}
         </Button>
       </section>
     </form>

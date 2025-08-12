@@ -55,13 +55,13 @@ const NearbyPlaceItem = ({
   <div className="flex items-center gap-2">
     <MapPin size={16} />
     <Input
-      className="bg-gray-200"
+      className="flex-1 bg-gray-200"
       placeholder="Location Name"
       value={place.name}
       onChange={(e) => onUpdate(index, { ...place, name: e.target.value })}
     />
     <Input
-      className="flex-1 bg-gray-200"
+      className="w-18 bg-gray-200"
       placeholder="Radius"
       value={place.distance}
       onChange={(e) => onUpdate(index, { ...place, distance: e.target.value })}

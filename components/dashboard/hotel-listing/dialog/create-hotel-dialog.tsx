@@ -1,6 +1,5 @@
 "use client";
 
-import { createHotel } from "@/app/(dashboard)/hotel-listing/actions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -41,7 +40,9 @@ const CreateAgentControlDialog = () => {
 
   function onSubmit(input: CreateHotelSchema) {
     startTransition(async () => {
-      const { success } = await createHotel(input);
+      // const { success } = await createHotel(input);
+
+      const success = true;
 
       if (!success) {
         toast.error("Failed to create hotel");
