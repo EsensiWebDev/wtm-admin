@@ -89,7 +89,10 @@ const RoomAvailabilityTable = ({ promises }: RoomAvailabilityTableProps) => {
       </DataTable>
 
       <UpdateRoomAvailabilityDrawer
-        open={rowAction?.variant === "update"}
+        isEdit={rowAction?.variant === "update"}
+        open={
+          rowAction?.variant === "update" || rowAction?.variant === "detail"
+        }
         roomAvailabilityHotel={rowAction?.row.original ?? null}
         onOpenChange={() => setRowAction(null)}
         period={date ? format(date, "MM-yyyy") : null}

@@ -37,13 +37,47 @@ export function getRoomAvailabilityTableColumns({
         <DataTableColumnHeader column={column} title="Hotel Name" />
       ),
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">{row.original.name}</div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            onClick={() => setRowAction({ row, variant: "detail" })}
+          >
+            {row.original.name}
+          </Button>
+        </div>
       ),
       meta: {
         label: "Hotel Name",
         placeholder: "Search hotel name...",
         variant: "text",
         icon: Text,
+      },
+      enableColumnFilter: true,
+      enableHiding: false,
+    },
+    {
+      id: "region",
+      accessorKey: "region",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Region" />
+      ),
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">{row.original.region}</div>
+      ),
+      meta: {
+        label: "Region",
+        placeholder: "Search region...",
+        variant: "multiSelect",
+        options: [
+          {
+            label: "Jakarta",
+            value: "Jakarta",
+          },
+          {
+            label: "Denpasar",
+            value: "Denpasar",
+          },
+        ],
       },
       enableColumnFilter: true,
       enableHiding: false,
@@ -64,9 +98,14 @@ export function getRoomAvailabilityTableColumns({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
               <DropdownMenuItem
+                onSelect={() => setRowAction({ row, variant: "detail" })}
+              >
+                View
+              </DropdownMenuItem>
+              <DropdownMenuItem
                 onSelect={() => setRowAction({ row, variant: "update" })}
               >
-                Detail
+                Edit
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

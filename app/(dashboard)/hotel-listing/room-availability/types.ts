@@ -9,6 +9,7 @@ export interface RoomAvailability {
 export interface RoomAvailabilityHotel {
   id: string;
   name: string;
+  region: string;
   period: string;
   rooms: RoomAvailability[];
 }

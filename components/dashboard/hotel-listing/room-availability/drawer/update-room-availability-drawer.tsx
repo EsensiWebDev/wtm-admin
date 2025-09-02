@@ -34,6 +34,7 @@ interface AvailabilityTableProps {
   roomAvailabilityHotel: RoomAvailabilityHotel | null;
   days: string[];
   setLocalHotel: (hotel: RoomAvailabilityHotel) => void;
+  isEdit?: boolean;
 }
 
 function AvailabilityTable({
@@ -41,6 +42,7 @@ function AvailabilityTable({
   roomAvailabilityHotel,
   days,
   setLocalHotel,
+  isEdit = false,
 }: AvailabilityTableProps) {
   if (!localHotel) return null;
   return (
@@ -87,25 +89,39 @@ function AvailabilityTable({
                   return (
                     <td key={dayIndex} className="p-1">
                       <div
-                        className={`h-8 w-full rounded cursor-pointer transition-colors hover:opacity-80
+                        className={`h-8 w-full rounded transition-colors
                           ${isAvailable ? "bg-green-500" : "bg-red-500"}
                           ${
                             isEdited
                               ? "bg-amber-300 border-2 border-amber-400"
                               : ""
                           }
+                          ${
+                            isEdit
+                              ? "cursor-pointer hover:opacity-80"
+                              : "cursor-default"
+                          }
                         `}
-                        onClick={() => {
-                          const updatedHotel = JSON.parse(
-                            JSON.stringify(localHotel)
-                          );
-                          updatedHotel.rooms[roomIndex].availability[dayIndex] =
-                            !isAvailable;
-                          setLocalHotel(updatedHotel);
-                        }}
-                        title={`Click to toggle availability for ${
-                          roomType.name
-                        } on day ${dayIndex + 1}`}
+                        onClick={
+                          isEdit
+                            ? () => {
+                                const updatedHotel = JSON.parse(
+                                  JSON.stringify(localHotel)
+                                );
+                                updatedHotel.rooms[roomIndex].availability[
+                                  dayIndex
+                                ] = !isAvailable;
+                                setLocalHotel(updatedHotel);
+                              }
+                            : undefined
+                        }
+                        title={
+                          isEdit
+                            ? `Click to toggle availability for ${
+                                roomType.name
+                              } on day ${dayIndex + 1}`
+                            : undefined
+                        }
                       />
                     </td>
                   );
@@ -127,12 +143,14 @@ interface UpdateRoomAvailabilityDrawerProps
   period: string | null;
   showTrigger?: boolean;
   onSuccess?: () => void;
+  isEdit?: boolean;
 }
 
 export const UpdateRoomAvailabilityDrawer = ({
   roomAvailabilityHotel,
   period,
   onSuccess,
+  isEdit = false,
   ...props
 }: UpdateRoomAvailabilityDrawerProps) => {
   // State
@@ -158,6 +176,24 @@ export const UpdateRoomAvailabilityDrawer = ({
           (_, i) => String(i + 1).padStart(2, "0")
         )
       : [];
+
+  // Check if there are any changes
+  const hasChanges = React.useMemo(() => {
+    if (!localHotel || !roomAvailabilityHotel) return false;
+
+    return localHotel.rooms.some((room, roomIndex) => {
+      const originalRoom = roomAvailabilityHotel.rooms[roomIndex];
+      if (!originalRoom) return false;
+
+      return room.availability.some((isAvailable, dayIndex) => {
+        const originalAvailability = originalRoom.availability[dayIndex];
+        return (
+          originalAvailability !== undefined &&
+          isAvailable !== originalAvailability
+        );
+      });
+    });
+  }, [localHotel, roomAvailabilityHotel]);
 
   // Handle update
   function onUpdate() {
@@ -203,25 +239,34 @@ export const UpdateRoomAvailabilityDrawer = ({
             roomAvailabilityHotel={roomAvailabilityHotel}
             days={days}
             setLocalHotel={setLocalHotel}
+            isEdit={isEdit}
           />
 
           {/* Legend and Save Button */}
           <div className="flex items-center justify-between">
             <AvailabilityLegend />
             {/* Trigger Button */}
-            <Button size="sm" onClick={() => setOpen(true)}>
-              Save Changes
-            </Button>
+            {isEdit && (
+              <Button
+                size="sm"
+                onClick={() => setOpen(true)}
+                disabled={!hasChanges}
+              >
+                Save Changes
+              </Button>
+            )}
             {/* Confirmation Dialog */}
-            <ConfirmationDialog
-              open={open}
-              onOpenChange={setOpen}
-              onConfirm={onUpdate}
-              onCancel={onCancel}
-              isLoading={isUpdatePending}
-              title="Save Room Availability"
-              description="Are you sure you want to save the changes to room availability?"
-            />
+            {isEdit && (
+              <ConfirmationDialog
+                open={open}
+                onOpenChange={setOpen}
+                onConfirm={onUpdate}
+                onCancel={onCancel}
+                isLoading={isUpdatePending}
+                title="Save Room Availability"
+                description="Are you sure you want to save the changes to room availability?"
+              />
+            )}
           </div>
         </div>
       </DrawerContent>

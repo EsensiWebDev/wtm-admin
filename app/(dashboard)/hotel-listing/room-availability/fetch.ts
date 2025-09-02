@@ -12,6 +12,7 @@ export const getData = async ({
     {
       id: "1",
       name: "Ibis Hotel & Convention",
+      region: "Jakarta",
       period: "June 2025",
       rooms: [
         {
@@ -91,6 +92,7 @@ export const getData = async ({
     {
       id: "2",
       name: "Atria Hotel",
+      region: "Denpasar",
       period: "June 2025",
       rooms: [
         {
