@@ -15,6 +15,8 @@ export interface Report {
   company: string;
   email: string;
   hotel_name: string;
+  confirmed_bookings: number;
+  cancelled_bookings: number;
   status: string;
   bookings: ReportBooking[];
 }
@@ -23,6 +25,12 @@ export interface ReportTableResponse {
   success: boolean;
   data: Report[];
   pageCount: number;
+}
+
+export interface ReportBookingsPaginatedResponse {
+  data: ReportBooking[];
+  pageCount: number;
+  totalCount: number;
 }
 
 export interface ReportPageProps {

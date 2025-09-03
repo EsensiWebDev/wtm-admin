@@ -1,16 +1,9 @@
 import { Report } from "@/app/(dashboard)/report/types";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { DataTableRowAction, Option } from "@/types/data-table";
 import { ColumnDef } from "@tanstack/react-table";
-import { CalendarIcon, Ellipsis, EyeIcon, Text } from "lucide-react";
+import { CalendarIcon, EyeIcon, Text } from "lucide-react";
 import React from "react";
 
 interface GetReportTableColumnsProps {
@@ -124,39 +117,61 @@ export function getReportTableColumns({
       enableColumnFilter: true,
     },
     {
-      id: "actions",
-      cell: function Cell({ row }) {
-        const [isUpdatePending, startUpdateTransition] = React.useTransition();
-
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                aria-label="Open menu"
-                variant="ghost"
-                className="flex size-8 p-0 data-[state=open]:bg-muted"
-              >
-                <Ellipsis className="size-4" aria-hidden="true" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem
-                onSelect={() => setRowAction({ row, variant: "update" })}
-              >
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                onSelect={() => setRowAction({ row, variant: "delete" })}
-              >
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      },
-      size: 40,
+      id: "confirmed_bookings",
+      accessorKey: "detail",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Confirmed Bookings" />
+      ),
+      cell: ({ row }) => (
+        <div className="text-center">{row.original.confirmed_bookings}</div>
+      ),
+      enableHiding: false,
     },
+    {
+      id: "cancelled_bookings",
+      accessorKey: "detail",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Cancelled Bookings" />
+      ),
+      cell: ({ row }) => (
+        <div className="text-center">{row.original.cancelled_bookings}</div>
+      ),
+      enableHiding: false,
+    },
+    // {
+    //   id: "actions",
+    //   cell: function Cell({ row }) {
+    //     const [isUpdatePending, startUpdateTransition] = React.useTransition();
+
+    //     return (
+    //       <DropdownMenu>
+    //         <DropdownMenuTrigger asChild>
+    //           <Button
+    //             aria-label="Open menu"
+    //             variant="ghost"
+    //             className="flex size-8 p-0 data-[state=open]:bg-muted"
+    //           >
+    //             <Ellipsis className="size-4" aria-hidden="true" />
+    //           </Button>
+    //         </DropdownMenuTrigger>
+    //         <DropdownMenuContent align="end" className="w-40">
+    //           <DropdownMenuItem
+    //             onSelect={() => setRowAction({ row, variant: "update" })}
+    //           >
+    //             Edit
+    //           </DropdownMenuItem>
+    //           <DropdownMenuSeparator />
+    //           <DropdownMenuItem
+    //             variant="destructive"
+    //             onSelect={() => setRowAction({ row, variant: "delete" })}
+    //           >
+    //             Delete
+    //           </DropdownMenuItem>
+    //         </DropdownMenuContent>
+    //       </DropdownMenu>
+    //     );
+    //   },
+    //   size: 40,
+    // },
   ];
 }
