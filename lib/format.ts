@@ -1,3 +1,11 @@
+export function formatCurrency(nominal: number, currency = "IDR"): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currency,
+    trailingZeroDisplay: "stripIfInteger",
+  }).format(nominal);
+}
+
 export function formatDate(
   date: Date | string | number | undefined,
   opts: Intl.DateTimeFormatOptions = {}

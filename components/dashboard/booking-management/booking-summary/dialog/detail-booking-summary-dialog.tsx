@@ -42,6 +42,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DataTableRowAction } from "@/types/data-table";
 import {
   IconApi,
   IconApiOff,
@@ -50,6 +51,13 @@ import {
   IconNote,
 } from "@tabler/icons-react";
 import { Ban, MoreHorizontal } from "lucide-react";
+import ViewInvoiceDialog from "./view-invoice-dialog";
+
+interface GetDetailBookingTableColumnsProps {
+  setRowAction: React.Dispatch<
+    React.SetStateAction<DataTableRowAction<DetailBookingSummary> | null>
+  >;
+}
 
 // Extended type for detail view with additional fields
 interface DetailBookingSummary extends BookingSummary {
@@ -121,7 +129,9 @@ function NotesDialog({
 }
 
 // Column definitions for the booking details table
-const getDetailBookingColumns = (): ColumnDef<DetailBookingSummary>[] => [
+const getDetailBookingColumns = ({
+  setRowAction,
+}: GetDetailBookingTableColumnsProps): ColumnDef<DetailBookingSummary>[] => [
   {
     id: "no",
     header: "No",
@@ -408,8 +418,9 @@ const getDetailBookingColumns = (): ColumnDef<DetailBookingSummary>[] => [
       };
 
       const handleViewInvoice = () => {
-        toast.info("Opening invoice viewer...");
+        // toast.info("Opening invoice viewer...");
         // Implementation would open invoice viewer
+        setRowAction({ row, variant: "invoice" });
       };
 
       return (
@@ -455,6 +466,8 @@ export function DetailBookingSummaryDialog({
   onSuccess,
   ...props
 }: DetailBookingSummaryDialogProps) {
+  const [rowAction, setRowAction] =
+    React.useState<DataTableRowAction<any> | null>(null);
   // State for server-side pagination and sorting
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
@@ -480,7 +493,13 @@ export function DetailBookingSummaryDialog({
     }
   }, [props.open, bookingSummary]);
 
-  const columns = React.useMemo(() => getDetailBookingColumns(), []);
+  const columns = React.useMemo(
+    () =>
+      getDetailBookingColumns({
+        setRowAction,
+      }),
+    []
+  );
 
   const table = useReactTable({
     data: mockData,
@@ -500,78 +519,84 @@ export function DetailBookingSummaryDialog({
   if (!bookingSummary) return null;
 
   return (
-    <Dialog {...props}>
-      <DialogContent className="sm:max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle>
-            Booking Details - {bookingSummary.booking_id}
-          </DialogTitle>
-          <div className="grid grid-cols-2 gap-4 pt-2 text-sm text-muted-foreground">
-            <div>
-              <span className="font-medium">Agent:</span>{" "}
-              {bookingSummary.agent_name}
-            </div>
-            <div>
-              <span className="font-medium">Company:</span>{" "}
-              {bookingSummary.agent_company}
-            </div>
-            <div>
-              <span className="font-medium">Booking ID:</span>{" "}
-              {bookingSummary.booking_id}
-            </div>
-            <div>
-              <span className="font-medium">Promo ID:</span>{" "}
-              {bookingSummary.promo_id}
-            </div>
-            <div>
-              <span className="font-medium">Group Promo:</span>{" "}
-              {bookingSummary.group_promo}
-            </div>
-            <div>
-              <span className="font-medium">Status:</span>{" "}
-              <span
-                className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
-                  bookingSummary.booking_status === "confirmed"
-                    ? "text-green-600 bg-green-100"
-                    : bookingSummary.booking_status === "rejected"
-                    ? "text-red-600 bg-red-100"
-                    : "text-yellow-600 bg-yellow-100"
-                }`}
-              >
-                {bookingSummary.booking_status}
-              </span>
-            </div>
-          </div>
-        </DialogHeader>
-        <div className="flex-1 overflow-hidden flex flex-col">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-48">
-              <div className="flex items-center gap-2">
-                <LoadingSpinner className="h-4 w-4" />
-                <span className="text-sm text-muted-foreground">
-                  Loading booking details...
+    <>
+      <Dialog {...props}>
+        <DialogContent className="sm:max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle>
+              Booking Details - {bookingSummary.booking_id}
+            </DialogTitle>
+            <div className="grid grid-cols-2 gap-4 pt-2 text-sm text-muted-foreground">
+              <div>
+                <span className="font-medium">Agent:</span>{" "}
+                {bookingSummary.agent_name}
+              </div>
+              <div>
+                <span className="font-medium">Company:</span>{" "}
+                {bookingSummary.agent_company}
+              </div>
+              <div>
+                <span className="font-medium">Booking ID:</span>{" "}
+                {bookingSummary.booking_id}
+              </div>
+              <div>
+                <span className="font-medium">Promo ID:</span>{" "}
+                {bookingSummary.promo_id}
+              </div>
+              <div>
+                <span className="font-medium">Group Promo:</span>{" "}
+                {bookingSummary.group_promo}
+              </div>
+              <div>
+                <span className="font-medium">Status:</span>{" "}
+                <span
+                  className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
+                    bookingSummary.booking_status === "confirmed"
+                      ? "text-green-600 bg-green-100"
+                      : bookingSummary.booking_status === "rejected"
+                      ? "text-red-600 bg-red-100"
+                      : "text-yellow-600 bg-yellow-100"
+                  }`}
+                >
+                  {bookingSummary.booking_status}
                 </span>
               </div>
             </div>
-          ) : (
-            <>
-              <div className="flex-1 overflow-auto relative">
-                {isFetching && (
-                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50 backdrop-blur-sm">
-                    <div className="flex items-center gap-2 rounded-lg bg-background p-3 shadow-lg border">
-                      <LoadingSpinner className="h-4 w-4" />
-                      <span className="text-sm text-muted-foreground">
-                        Updating data...
-                      </span>
-                    </div>
-                  </div>
-                )}
-                <DataTable table={table} />
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden flex flex-col">
+            {isLoading ? (
+              <div className="flex items-center justify-center h-48">
+                <div className="flex items-center gap-2">
+                  <LoadingSpinner className="h-4 w-4" />
+                  <span className="text-sm text-muted-foreground">
+                    Loading booking details...
+                  </span>
+                </div>
               </div>
-            </>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+            ) : (
+              <>
+                <div className="flex-1 overflow-auto relative">
+                  {isFetching && (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50 backdrop-blur-sm">
+                      <div className="flex items-center gap-2 rounded-lg bg-background p-3 shadow-lg border">
+                        <LoadingSpinner className="h-4 w-4" />
+                        <span className="text-sm text-muted-foreground">
+                          Updating data...
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  <DataTable table={table} />
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+      <ViewInvoiceDialog
+        open={rowAction?.variant === "invoice"}
+        onOpenChange={() => setRowAction(null)}
+      />
+    </>
   );
 }
