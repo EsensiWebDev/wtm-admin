@@ -10,7 +10,6 @@ import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { useDataTable } from "@/hooks/use-data-table";
 import type { DataTableRowAction } from "@/types/data-table";
 import React, { useTransition } from "react";
-import CreateBookingSummaryDialog from "../dialog/create-booking-summary-dialog";
 import { DeleteBookingSummaryDialog } from "../dialog/delete-booking-summary-dialog";
 import { DetailBookingSummaryDialog } from "../dialog/detail-booking-summary-dialog";
 import EditBookingSummaryDialog from "../dialog/edit-booking-summary-dialog";
@@ -55,14 +54,14 @@ const BookingSummaryTable = ({ promises }: BookingSummaryTableProps) => {
       <div className="relative">
         <DataTable table={table} isPending={isPending}>
           <DataTableToolbar table={table} isPending={isPending}>
-            <CreateBookingSummaryDialog />
+            {/* <CreateBookingSummaryDialog /> */}
           </DataTableToolbar>
         </DataTable>
       </div>
       <DetailBookingSummaryDialog
         open={rowAction?.variant === "detail"}
         onOpenChange={() => setRowAction(null)}
-        bookingSummary={rowAction?.row.original ? [rowAction.row.original] : []}
+        bookingSummary={rowAction?.row.original ?? null}
         onSuccess={() => rowAction?.row.toggleSelected(false)}
       />
       {rowAction?.variant === "update" && (

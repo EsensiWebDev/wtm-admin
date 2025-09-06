@@ -1,94 +1,576 @@
 "use client";
 
-import type { Row } from "@tanstack/react-table";
-import { Loader } from "lucide-react";
+import {
+  ColumnDef,
+  PaginationState,
+  SortingState,
+  getCoreRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import * as React from "react";
 import { toast } from "sonner";
 
 import { updateBookingStatus } from "@/app/(dashboard)/booking-management/booking-summary/actions";
-import { BookingSummary } from "@/app/(dashboard)/booking-management/booking-summary/types";
-import { ImageGrid } from "@/components/dashboard/account/agent-control/image-grid";
+import {
+  BookingStatus,
+  BookingSummary,
+  PaymentStatus,
+} from "@/app/(dashboard)/booking-management/booking-summary/types";
+import { ConfirmationDialog } from "@/components/confirmation-dialog";
+import { DataTable } from "@/components/data-table/data-table";
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Label } from "@/components/ui/label";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  IconApi,
+  IconApiOff,
+  IconFileDownload,
+  IconFileText,
+  IconNote,
+} from "@tabler/icons-react";
+import { Ban, MoreHorizontal } from "lucide-react";
+
+// Extended type for detail view with additional fields
+interface DetailBookingSummary extends BookingSummary {
+  hotel_name: string;
+  sub_booking_id: string;
+  notes?: string;
+  api_status: boolean;
+}
 
 interface DetailBookingSummaryDialogProps
   extends React.ComponentPropsWithoutRef<typeof Dialog> {
-  bookingSummary: Row<BookingSummary>["original"][];
+  bookingSummary: BookingSummary | null;
   onSuccess?: () => void;
 }
+
+// Mock data for demonstration - replace with actual API call
+const generateMockDetailData = (
+  summary: BookingSummary
+): DetailBookingSummary[] => {
+  return [
+    {
+      ...summary,
+      hotel_name: "Grand Hotel Plaza",
+      sub_booking_id: `SUB-${summary.booking_id}-001`,
+      notes: "Guest requested late check-in. Room upgrade available.",
+      api_status: true,
+    },
+    {
+      ...summary,
+      id: `${summary.id}-2`,
+      hotel_name: "Grand Hotel Plaza",
+      sub_booking_id: `SUB-${summary.booking_id}-002`,
+      notes: "Special dietary requirements noted.",
+      api_status: false,
+    },
+  ];
+};
+
+// Notes Dialog Component
+interface NotesDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  notes: string;
+  guestName: string;
+}
+
+function NotesDialog({
+  open,
+  onOpenChange,
+  notes,
+  guestName,
+}: NotesDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Booking Notes - {guestName}</DialogTitle>
+        </DialogHeader>
+        <div className="py-4">
+          <div className="bg-muted/50 rounded-lg p-4">
+            <p className="text-sm leading-relaxed">
+              {notes || "No notes available for this booking."}
+            </p>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Column definitions for the booking details table
+const getDetailBookingColumns = (): ColumnDef<DetailBookingSummary>[] => [
+  {
+    id: "no",
+    header: "No",
+    cell: ({ row }) => row.index + 1,
+    enableSorting: false,
+    enableHiding: false,
+    size: 60,
+  },
+  {
+    id: "guest_name",
+    accessorKey: "guest_name",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Guest Name" />
+    ),
+    cell: ({ row }) => (
+      <div className="font-medium">{row.original.guest_name}</div>
+    ),
+    enableHiding: false,
+  },
+  {
+    id: "hotel_name",
+    accessorKey: "hotel_name",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Hotel Name" />
+    ),
+    cell: ({ row }) => row.original.hotel_name,
+    enableHiding: false,
+  },
+  {
+    id: "sub_booking_id",
+    accessorKey: "sub_booking_id",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Sub-Booking ID" />
+    ),
+    cell: ({ row }) => (
+      <div className="font-mono text-sm">{row.original.sub_booking_id}</div>
+    ),
+    enableHiding: false,
+  },
+  {
+    id: "booking_status",
+    accessorKey: "booking_status",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Booking Status" />
+    ),
+    cell: ({ row }) => {
+      const [isUpdatePending, startUpdateTransition] = React.useTransition();
+      const [selectValue, setSelectValue] = React.useState<BookingStatus>(
+        row.original.booking_status
+      );
+      const [dialogOpen, setDialogOpen] = React.useState(false);
+      const [pendingValue, setPendingValue] = React.useState<string | null>(
+        null
+      );
+
+      const handleConfirm = async () => {
+        if (!pendingValue) return;
+        startUpdateTransition(() => {
+          (async () => {
+            try {
+              const result = await updateBookingStatus(
+                row.original.id,
+                pendingValue
+              );
+              if (result?.success) {
+                setSelectValue(pendingValue as BookingStatus);
+                setPendingValue(null);
+                setDialogOpen(false);
+                toast.success("Booking status updated successfully");
+              } else {
+                toast.error("Failed to update booking status");
+              }
+            } catch (error) {
+              toast.error("An error occurred. Please try again.");
+            }
+          })();
+        });
+      };
+
+      const handleCancel = () => {
+        setDialogOpen(false);
+        setPendingValue(null);
+      };
+
+      const getStatusColor = (value: string) => {
+        if (value === "confirmed") return "text-green-600 bg-green-100";
+        if (value === "rejected") return "text-red-600 bg-red-100";
+        if (value === "in review") return "text-yellow-600 bg-yellow-100";
+        return "";
+      };
+
+      return (
+        <>
+          <Label
+            htmlFor={`${row.original.id}-booking-status`}
+            className="sr-only"
+          >
+            Booking Status
+          </Label>
+          <Select
+            disabled={isUpdatePending}
+            value={selectValue}
+            onValueChange={(value: BookingStatus) => {
+              setPendingValue(value);
+              setDialogOpen(true);
+            }}
+          >
+            <SelectTrigger
+              className={`w-38 rounded-full px-3 border-0 shadow-none **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate ${getStatusColor(
+                selectValue
+              )}`}
+              id={`${row.original.id}-booking-status`}
+            >
+              <SelectValue placeholder="Change status" />
+            </SelectTrigger>
+            <SelectContent align="end">
+              <SelectItem value="confirmed">Confirmed</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="in review">In Review</SelectItem>
+            </SelectContent>
+          </Select>
+          <ConfirmationDialog
+            open={dialogOpen}
+            onOpenChange={setDialogOpen}
+            onConfirm={handleConfirm}
+            onCancel={handleCancel}
+            isLoading={isUpdatePending}
+            title="Change Booking Status"
+            description="You're about to update the booking status for this booking."
+          />
+        </>
+      );
+    },
+    enableHiding: false,
+  },
+  {
+    id: "payment_status",
+    accessorKey: "payment_status",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Payment Status" />
+    ),
+    cell: ({ row }) => {
+      const [isUpdatePending, startUpdateTransition] = React.useTransition();
+      const [selectValue, setSelectValue] = React.useState<PaymentStatus>(
+        row.original.payment_status
+      );
+      const [dialogOpen, setDialogOpen] = React.useState(false);
+      const [pendingValue, setPendingValue] = React.useState<string | null>(
+        null
+      );
+
+      const handleConfirm = async () => {
+        if (!pendingValue) return;
+        // Implementation would call updatePaymentStatus API
+        startUpdateTransition(() => {
+          setTimeout(() => {
+            setSelectValue(pendingValue as PaymentStatus);
+            setPendingValue(null);
+            setDialogOpen(false);
+            toast.success("Payment status updated successfully");
+          }, 1000);
+        });
+      };
+
+      const handleCancel = () => {
+        setDialogOpen(false);
+        setPendingValue(null);
+      };
+
+      const getStatusColor = (value: string) => {
+        if (value === "paid") return "text-green-600 bg-green-100";
+        if (value === "unpaid") return "text-red-600 bg-red-100";
+        return "";
+      };
+
+      return (
+        <>
+          <Label
+            htmlFor={`${row.original.id}-payment-status`}
+            className="sr-only"
+          >
+            Payment Status
+          </Label>
+          <Select
+            disabled={isUpdatePending}
+            value={selectValue}
+            onValueChange={(value: PaymentStatus) => {
+              setPendingValue(value);
+              setDialogOpen(true);
+            }}
+          >
+            <SelectTrigger
+              className={`w-32 rounded-full px-3 border-0 shadow-none **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate ${getStatusColor(
+                selectValue
+              )}`}
+              id={`${row.original.id}-payment-status`}
+            >
+              <SelectValue placeholder="Change status" />
+            </SelectTrigger>
+            <SelectContent align="end">
+              <SelectItem value="paid">Paid</SelectItem>
+              <SelectItem value="unpaid">Unpaid</SelectItem>
+            </SelectContent>
+          </Select>
+          <ConfirmationDialog
+            open={dialogOpen}
+            onOpenChange={setDialogOpen}
+            onConfirm={handleConfirm}
+            onCancel={handleCancel}
+            isLoading={isUpdatePending}
+            title="Change Payment Status"
+            description="You're about to update the payment status for this booking."
+          />
+        </>
+      );
+    },
+    enableHiding: false,
+  },
+  {
+    id: "notes",
+    accessorKey: "notes",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Notes" />
+    ),
+    cell: ({ row }) => {
+      const [notesOpen, setNotesOpen] = React.useState(false);
+      return (
+        <>
+          <Button size="sm" onClick={() => setNotesOpen(true)}>
+            <IconNote />
+            Notes
+          </Button>
+          <NotesDialog
+            open={notesOpen}
+            onOpenChange={setNotesOpen}
+            notes={row.original.notes || ""}
+            guestName={row.original.guest_name}
+          />
+        </>
+      );
+    },
+    enableHiding: false,
+    enableSorting: false,
+  },
+  {
+    id: "api_status",
+    accessorKey: "api_status",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="API Status" />
+    ),
+    cell: ({ row }) => (
+      <div>
+        {row.original.api_status ? (
+          <IconApi aria-label="API Connected" />
+        ) : (
+          <IconApiOff aria-label="API Disconnected" />
+        )}
+      </div>
+    ),
+    enableHiding: false,
+    enableSorting: false,
+    size: 100,
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => {
+      const handleCancel = () => {
+        toast.promise(
+          new Promise((resolve) =>
+            setTimeout(() => resolve({ success: true }), 1000)
+          ),
+          {
+            loading: "Cancelling booking...",
+            success: "Booking cancelled successfully",
+            error: "Failed to cancel booking",
+          }
+        );
+      };
+
+      const handleViewReceipt = () => {
+        toast.info("Opening receipt viewer...");
+        // Implementation would open receipt viewer
+      };
+
+      const handleViewInvoice = () => {
+        toast.info("Opening invoice viewer...");
+        // Implementation would open invoice viewer
+      };
+
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              aria-label="Open menu"
+              variant="ghost"
+              className="flex size-8 p-0 data-[state=open]:bg-muted"
+            >
+              <MoreHorizontal className="size-4" aria-hidden="true" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem onClick={handleViewReceipt}>
+              <IconFileText className="mr-2 h-4 w-4" />
+              View Receipt
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleViewInvoice}>
+              <IconFileDownload className="mr-2 h-4 w-4" />
+              View Invoice
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={handleCancel}
+              className="text-red-600 focus:text-red-600"
+            >
+              <Ban className="mr-2 h-4 w-4" />
+              Cancel
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
+    enableHiding: false,
+    enableSorting: false,
+    size: 60,
+  },
+];
 
 export function DetailBookingSummaryDialog({
   bookingSummary,
   onSuccess,
   ...props
 }: DetailBookingSummaryDialogProps) {
-  const [isUpdatePending, startUpdateTransition] = React.useTransition();
-  const [variant, setVariant] = React.useState<"approved" | "rejected" | null>(
-    null
-  );
+  // State for server-side pagination and sorting
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
 
-  // Sample image data - replace with actual data from BookingSummary
-  const images = [
-    { title: "Booking Selfie Photo" },
-    { title: "Identity Card" },
-    { title: "Certificate" },
-    { title: "Name Card" },
-    { title: "Others" },
-  ];
+  const [sorting, setSorting] = React.useState<SortingState>([]);
 
-  function onUpdate({ variant }: { variant: "approved" | "rejected" }) {
-    setVariant(variant);
+  // Mock data - in real implementation, this would be fetched from API
+  const mockData = React.useMemo(() => {
+    if (!bookingSummary) return [];
+    return generateMockDetailData(bookingSummary);
+  }, [bookingSummary]);
 
-    startUpdateTransition(async () => {
-      toast.promise(updateBookingStatus("1", variant), {
-        loading: "Updating booking status...",
-        success: (data) => data.message,
-        error: "Failed to update booking status",
-      });
-      props.onOpenChange?.(false);
-      onSuccess?.();
-      setVariant(null);
-    });
-  }
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isFetching, setIsFetching] = React.useState(false);
+
+  // Simulate loading when dialog opens
+  React.useEffect(() => {
+    if (props.open && bookingSummary) {
+      setIsLoading(true);
+      setTimeout(() => setIsLoading(false), 800);
+    }
+  }, [props.open, bookingSummary]);
+
+  const columns = React.useMemo(() => getDetailBookingColumns(), []);
+
+  const table = useReactTable({
+    data: mockData,
+    columns,
+    pageCount: 1, // Mock page count
+    state: {
+      pagination,
+      sorting,
+    },
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    manualPagination: true,
+    manualSorting: true,
+  });
+
+  if (!bookingSummary) return null;
 
   return (
     <Dialog {...props}>
-      <DialogContent className="sm:max-w-6xl">
-        <DialogHeader>
-          <DialogTitle className="sr-only">
-            Detail Booking Management
+      <DialogContent className="sm:max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle>
+            Booking Details - {bookingSummary.booking_id}
           </DialogTitle>
+          <div className="grid grid-cols-2 gap-4 pt-2 text-sm text-muted-foreground">
+            <div>
+              <span className="font-medium">Agent:</span>{" "}
+              {bookingSummary.agent_name}
+            </div>
+            <div>
+              <span className="font-medium">Company:</span>{" "}
+              {bookingSummary.agent_company}
+            </div>
+            <div>
+              <span className="font-medium">Booking ID:</span>{" "}
+              {bookingSummary.booking_id}
+            </div>
+            <div>
+              <span className="font-medium">Promo ID:</span>{" "}
+              {bookingSummary.promo_id}
+            </div>
+            <div>
+              <span className="font-medium">Group Promo:</span>{" "}
+              {bookingSummary.group_promo}
+            </div>
+            <div>
+              <span className="font-medium">Status:</span>{" "}
+              <span
+                className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
+                  bookingSummary.booking_status === "confirmed"
+                    ? "text-green-600 bg-green-100"
+                    : bookingSummary.booking_status === "rejected"
+                    ? "text-red-600 bg-red-100"
+                    : "text-yellow-600 bg-yellow-100"
+                }`}
+              >
+                {bookingSummary.booking_status}
+              </span>
+            </div>
+          </div>
         </DialogHeader>
-        <ImageGrid images={images} />
-        <DialogFooter className="gap-2 sm:space-x-0 sm:justify-center">
-          <Button
-            aria-label="Approve Booking"
-            onClick={() => onUpdate({ variant: "approved" })}
-            disabled={isUpdatePending}
-          >
-            {variant === "approved" && isUpdatePending && (
-              <Loader className="mr-2 size-4 animate-spin" aria-hidden="true" />
-            )}
-            Approve
-          </Button>
-          <Button
-            aria-label="Reject Booking"
-            variant="destructive"
-            onClick={() => onUpdate({ variant: "rejected" })}
-            disabled={isUpdatePending}
-          >
-            {variant === "rejected" && isUpdatePending && (
-              <Loader className="mr-2 size-4 animate-spin" aria-hidden="true" />
-            )}
-            Reject
-          </Button>
-        </DialogFooter>
+        <div className="flex-1 overflow-hidden flex flex-col">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-48">
+              <div className="flex items-center gap-2">
+                <LoadingSpinner className="h-4 w-4" />
+                <span className="text-sm text-muted-foreground">
+                  Loading booking details...
+                </span>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="flex-1 overflow-auto relative">
+                {isFetching && (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50 backdrop-blur-sm">
+                    <div className="flex items-center gap-2 rounded-lg bg-background p-3 shadow-lg border">
+                      <LoadingSpinner className="h-4 w-4" />
+                      <span className="text-sm text-muted-foreground">
+                        Updating data...
+                      </span>
+                    </div>
+                  </div>
+                )}
+                <DataTable table={table} />
+              </div>
+            </>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
