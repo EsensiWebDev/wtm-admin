@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { DataTableRowAction, Option } from "@/types/data-table";
+import { IconCloudUpload } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { EyeIcon, FileText, Text } from "lucide-react";
 import React from "react";
@@ -369,6 +370,28 @@ export function getBookingSummaryTableColumns({
         <DataTableColumnHeader column={column} title="Payment Receipt" />
       ),
       cell: ({ row }) => {
+        if (row.original.payment_status === "unpaid")
+          return (
+            <Button
+              size={"sm"}
+              onClick={() => {
+                const promise = () =>
+                  new Promise((resolve) =>
+                    setTimeout(() => resolve({ name: "Sonner" }), 2000)
+                  );
+
+                toast.promise(promise, {
+                  loading: "Uploading...",
+                  success: "Receipt uploaded successfully",
+                  error: "Failed to upload receipt",
+                });
+              }}
+            >
+              <IconCloudUpload className="h-4 w-4" />
+              Upload Receipt
+            </Button>
+          );
+
         return (
           <Button
             size={"sm"}
