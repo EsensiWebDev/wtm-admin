@@ -24,7 +24,7 @@ export const editSuperAdminSchema = z.object({
   name: z.string().optional(),
   email: z.string().email().optional(),
   phone: z.string().optional(),
-  status: z.boolean().optional(),
+  is_active: z.boolean().optional(),
 });
 
 export type EditSuperAdminSchema = z.infer<typeof editSuperAdminSchema>;
@@ -46,7 +46,7 @@ const EditSuperAdminDialog = ({
       name: superAdmin?.name ?? "",
       email: superAdmin?.email,
       phone: superAdmin?.phone_number,
-      status: superAdmin?.status,
+      is_active: superAdmin?.status,
     },
   });
 

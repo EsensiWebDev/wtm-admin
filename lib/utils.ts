@@ -46,7 +46,11 @@ export async function apiCall<TData>(
   const response = await bffFetch(endpoint, options);
 
   if (!response.ok) {
-    throw new Error(`API call failed with status ${response.status}`);
+    const error = await response.json();
+
+    throw new Error(
+      error.message || `API call failed with status ${response.status}`
+    );
   }
 
   const apiResponse: ApiResponse<TData> = await response.json();

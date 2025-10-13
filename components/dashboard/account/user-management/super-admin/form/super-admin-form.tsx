@@ -71,7 +71,7 @@ export function SuperAdminForm<T extends FieldValues>({
         />
         <FormField
           control={form.control}
-          name={"status" as FieldPath<T>}
+          name={"is_active" as FieldPath<T>}
           render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">
@@ -82,7 +82,7 @@ export function SuperAdminForm<T extends FieldValues>({
               </div>
               <FormControl>
                 <Switch
-                  checked={!!field.value}
+                  checked={field.value ?? true}
                   onCheckedChange={field.onChange}
                 />
               </FormControl>
