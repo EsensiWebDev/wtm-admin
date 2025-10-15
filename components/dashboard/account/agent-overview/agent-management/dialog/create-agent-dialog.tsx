@@ -21,12 +21,12 @@ import z from "zod";
 import { AgentForm } from "../form/agent-form";
 
 export const createAgentSchema = z.object({
-  name: z.string(),
-  company: z.string(),
-  promo_group: z.string(),
+  full_name: z.string(),
+  agent_company: z.string(),
+  promo_group_id: z.string(),
   email: z.string().email(),
   phone: z.string(),
-  status: z.boolean(),
+  is_active: z.boolean(),
 });
 
 export type CreateAgentSchema = z.infer<typeof createAgentSchema>;
@@ -38,12 +38,12 @@ const CreateAgentDialog = () => {
   const form = useForm<CreateAgentSchema>({
     resolver: zodResolver(createAgentSchema),
     defaultValues: {
-      name: "",
-      company: "",
-      promo_group: "",
+      full_name: "",
+      agent_company: "",
+      promo_group_id: "0",
       email: "",
       phone: "",
-      status: true,
+      is_active: true,
     },
   });
 
@@ -51,7 +51,7 @@ const CreateAgentDialog = () => {
     startTransition(async () => {
       const { success, message } = await createAgent(input);
       if (!success) {
-        toast.error("Failed to create agent");
+        toast.error(message ?? "Failed to create agent");
         return;
       }
       form.reset();

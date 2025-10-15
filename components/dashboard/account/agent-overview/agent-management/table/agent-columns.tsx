@@ -44,7 +44,7 @@ export function getAgentTableColumns({
       size: 40,
     },
     {
-      id: "name",
+      id: "search",
       accessorKey: "name",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Name" />
@@ -65,7 +65,7 @@ export function getAgentTableColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Agent Company" />
       ),
-      cell: ({ row }) => row.original.company,
+      cell: ({ row }) => row.original.agent_company_name,
     },
     {
       id: "Promo Group",
@@ -86,14 +86,17 @@ export function getAgentTableColumns({
             </Label>
             <Select
               disabled={isUpdatePending}
-              defaultValue={row.original.promo_group}
+              defaultValue={String(row.original.promo_group_id)}
               onValueChange={(value) => {
                 startUpdateTransition(() => {
-                  toast.promise(updatePromoGroup(row.original.id, value), {
-                    loading: "Updating promo group...",
-                    success: (data) => data.message,
-                    error: "Failed to change promo group",
-                  });
+                  toast.promise(
+                    updatePromoGroup(row.original.id, Number(value)),
+                    {
+                      loading: "Updating promo group...",
+                      success: (data) => data.message,
+                      error: "Failed to change promo group",
+                    }
+                  );
                 });
               }}
             >
@@ -140,7 +143,7 @@ export function getAgentTableColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Phone" />
       ),
-      cell: ({ row }) => row.original.phone,
+      cell: ({ row }) => row.original.phone_number,
       meta: {
         label: "Phone",
         placeholder: "Search phone...",

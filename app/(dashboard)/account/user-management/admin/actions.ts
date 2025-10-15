@@ -17,8 +17,6 @@ export async function createAdmin(input: CreateAdminSchema) {
       body: JSON.stringify(body),
     });
 
-    console.log({ response });
-
     if (response.status !== 200) {
       return {
         success: false,

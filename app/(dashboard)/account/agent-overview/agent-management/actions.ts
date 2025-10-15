@@ -10,15 +10,20 @@ import {
   ExportResult,
   FilterFunction,
 } from "@/lib/export-types";
+import { apiCall } from "@/lib/utils";
 import { SearchParams } from "@/types";
+import { revalidatePath } from "next/cache";
 import { Agent } from "./types";
 
-export async function updatePromoGroup(agentId: string, promo_group: string) {
+export async function updatePromoGroup(
+  agentId: number,
+  promo_group_id: number
+) {
   console.log("Update Agent Promo Group");
   await new Promise((resolve) => setTimeout(resolve, 1000));
   return {
     success: true,
-    message: `Agent Promo Group updated to ${promo_group}`,
+    message: `Agent(${agentId}) Promo Group updated to ${promo_group_id}`,
   };
 }
 
@@ -31,11 +36,54 @@ export async function deleteAgent(agentId: string) {
 export async function createAgent(input: CreateAgentSchema) {
   console.log("Create Agent:");
   console.log({ input });
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  return { success: true, message: `Agent created` };
+
+  try {
+    const body = {
+      ...input,
+      role: "agent",
+      promo_group_id: Number(input.promo_group_id),
+    };
+
+    const response = await apiCall("users", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+
+    console.log({ response, message: response.message });
+
+    if (response.status !== 200) {
+      return {
+        success: false,
+        message: response.message || "Failed to create agent",
+      };
+    }
+
+    revalidatePath("/account/agent-overview", "layout");
+
+    return {
+      success: true,
+      message: response.message ?? `Agent created`,
+    };
+  } catch (error) {
+    console.error("Error creating agent:", error);
+
+    // Handle API error responses with specific messages
+    if (error && typeof error === "object" && "message" in error) {
+      return {
+        success: false,
+        message: error.message as string,
+      };
+    }
+
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : "Failed to create admin",
+    };
+  }
 }
 
-export async function editAgent(input: EditAgentSchema & { id: string }) {
+export async function editAgent(input: EditAgentSchema & { id: number }) {
   console.log("Edit Agent:");
   console.log({ input });
   await new Promise((resolve) => setTimeout(resolve, 1000));

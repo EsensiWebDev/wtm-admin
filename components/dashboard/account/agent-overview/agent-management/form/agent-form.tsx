@@ -39,7 +39,7 @@ export function AgentForm<T extends FieldValues>({
       >
         <FormField
           control={form.control}
-          name={"name" as FieldPath<T>}
+          name={"full_name" as FieldPath<T>}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Agent Name</FormLabel>
@@ -52,7 +52,7 @@ export function AgentForm<T extends FieldValues>({
         />
         <FormField
           control={form.control}
-          name={"company" as FieldPath<T>}
+          name={"agent_company" as FieldPath<T>}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Agent Company</FormLabel>
@@ -65,7 +65,7 @@ export function AgentForm<T extends FieldValues>({
         />
         <FormField
           control={form.control}
-          name={"promo_group" as FieldPath<T>}
+          name={"promo_group_id" as FieldPath<T>}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Promo Group</FormLabel>
@@ -76,9 +76,9 @@ export function AgentForm<T extends FieldValues>({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="promo_a">Promo Group A</SelectItem>
-                  <SelectItem value="promo_b">Promo Group B</SelectItem>
-                  <SelectItem value="promo_c">Promo Group C</SelectItem>
+                  <SelectItem value="1">Promo Group A</SelectItem>
+                  <SelectItem value="2">Promo Group B</SelectItem>
+                  <SelectItem value="3">Promo Group C</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -113,7 +113,7 @@ export function AgentForm<T extends FieldValues>({
         />
         <FormField
           control={form.control}
-          name={"status" as FieldPath<T>}
+          name={"is_active" as FieldPath<T>}
           render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">
