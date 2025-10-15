@@ -3,6 +3,7 @@
 import { CreateSuperAdminSchema } from "@/components/dashboard/account/user-management/super-admin/dialog/create-super-admin-dialog";
 import { EditSuperAdminSchema } from "@/components/dashboard/account/user-management/super-admin/dialog/edit-super-admin-dialog";
 import { apiCall } from "@/lib/utils";
+import { revalidatePath } from "next/cache";
 
 export async function createSuperAdmin(input: CreateSuperAdminSchema) {
   try {
@@ -16,9 +17,18 @@ export async function createSuperAdmin(input: CreateSuperAdminSchema) {
       body: JSON.stringify(body),
     });
 
+    if (response.status !== 200) {
+      return {
+        success: false,
+        message: response.message || "Failed to create super admin",
+      };
+    }
+
+    revalidatePath("/account/user-management", "layout");
+
     return {
       success: true,
-      message: response.message ?? `Super Admin created`,
+      message: response.message || "Super Admin created",
     };
   } catch (error) {
     console.error("Error creating super admin:", error);
@@ -53,9 +63,18 @@ export async function editSuperAdmin(
       body: JSON.stringify(body),
     });
 
+    if (response.status !== 200) {
+      return {
+        success: false,
+        message: response.message || "Failed to edit",
+      };
+    }
+
+    revalidatePath("/account/user-management", "layout");
+
     return {
       success: true,
-      message: response.message ?? `Super Admin updated`,
+      message: response.message ?? `Account updated`,
     };
   } catch (error) {
     console.error("Error updating super admin:", error);

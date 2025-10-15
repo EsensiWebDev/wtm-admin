@@ -21,7 +21,7 @@ import z from "zod";
 import { AdminForm } from "../form/admin-form";
 
 export const createAdminSchema = z.object({
-  name: z.string(),
+  full_name: z.string(),
   email: z.string().email(),
   phone: z.string(),
   is_active: z.boolean(),
@@ -36,7 +36,7 @@ const CreateAdminDialog = () => {
   const form = useForm<CreateAdminSchema>({
     resolver: zodResolver(createAdminSchema),
     defaultValues: {
-      name: "",
+      full_name: "",
       email: "",
       phone: "",
       is_active: true,

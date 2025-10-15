@@ -5,7 +5,7 @@ export interface SuperAdmin {
   name: string;
   email: string;
   phone_number: string;
-  status: boolean;
+  status: string;
   promo_group_id: number;
   promo_group_name: string;
   agent_company_name: string;

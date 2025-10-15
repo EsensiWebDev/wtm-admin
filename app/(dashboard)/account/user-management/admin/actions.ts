@@ -3,6 +3,7 @@
 import { CreateAdminSchema } from "@/components/dashboard/account/user-management/admin/dialog/create-admin-dialog";
 import { EditAdminSchema } from "@/components/dashboard/account/user-management/admin/dialog/edit-admin-dialog";
 import { apiCall } from "@/lib/utils";
+import { revalidatePath } from "next/cache";
 
 export async function createAdmin(input: CreateAdminSchema) {
   try {
@@ -15,6 +16,17 @@ export async function createAdmin(input: CreateAdminSchema) {
       method: "POST",
       body: JSON.stringify(body),
     });
+
+    console.log({ response });
+
+    if (response.status !== 200) {
+      return {
+        success: false,
+        message: response.message || "Failed to create admin",
+      };
+    }
+
+    revalidatePath("/account/user-management", "layout");
 
     return {
       success: true,
@@ -50,6 +62,15 @@ export async function editAdmin(input: EditAdminSchema & { id: string }) {
       method: "PUT",
       body: JSON.stringify(body),
     });
+
+    if (response.status !== 200) {
+      return {
+        success: false,
+        message: response.message || "Failed to update admin",
+      };
+    }
+
+    revalidatePath("/account/user-management", "layout");
 
     return {
       success: true,

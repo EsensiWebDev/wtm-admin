@@ -82,9 +82,7 @@ export function getAdminTableColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Status" />
       ),
-      cell: ({ row }) => (
-        <span>{row.original.status ? "Active" : "Inactive"}</span>
-      ),
+      cell: ({ row }) => <span>{row.original.status}</span>,
       enableHiding: false,
       enableSorting: false,
     },

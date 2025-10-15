@@ -21,7 +21,7 @@ import z from "zod";
 import { AdminForm } from "../form/admin-form";
 
 export const editAdminSchema = z.object({
-  name: z.string().optional(),
+  full_name: z.string().optional(),
   email: z.string().email().optional(),
   phone: z.string().optional(),
   is_active: z.boolean().optional(),
@@ -40,10 +40,10 @@ const EditAdminDialog = ({ admin, ...props }: EditAdminDialogProps) => {
   const form = useForm<EditAdminSchema>({
     resolver: zodResolver(editAdminSchema),
     defaultValues: {
-      name: admin?.name ?? "",
+      full_name: admin?.name ?? "",
       email: admin?.email,
       phone: admin?.phone_number,
-      is_active: admin?.status,
+      is_active: admin?.status === "Active" ? true : false,
     },
   });
 
@@ -73,7 +73,11 @@ const EditAdminDialog = ({ admin, ...props }: EditAdminDialogProps) => {
             Edit details below and save the changes
           </DialogDescription>
         </DialogHeader>
-        <AdminForm<EditAdminSchema> form={form} onSubmit={onSubmit}>
+        <AdminForm<EditAdminSchema>
+          form={form}
+          onSubmit={onSubmit}
+          isEdit={true}
+        >
           <DialogFooter className="gap-2 pt-2 sm:space-x-0">
             <DialogClose asChild>
               <Button type="button" variant="outline">

@@ -21,7 +21,7 @@ import z from "zod";
 import { SuperAdminForm } from "../form/super-admin-form";
 
 export const createSuperAdminSchema = z.object({
-  name: z.string(),
+  full_name: z.string(),
   email: z.string().email(),
   phone: z.string().regex(/^\+[1-9]\d{1,14}$/, {
     message: "Phone number must be in E.164 format (e.g., +1234567890)",
@@ -38,7 +38,7 @@ const CreateSuperAdminDialog = () => {
   const form = useForm<CreateSuperAdminSchema>({
     resolver: zodResolver(createSuperAdminSchema),
     defaultValues: {
-      name: "",
+      full_name: "",
       email: "",
       phone: "",
       is_active: true,
@@ -50,9 +50,13 @@ const CreateSuperAdminDialog = () => {
       const { success, message } = await createSuperAdmin(input);
 
       if (!success) {
+        console.log("failed super admin");
         toast.error(message ?? "Failed to create super admin");
         return;
       }
+
+      console.log("created super admin");
+
       form.reset();
       setOpen(false);
       toast.success(message || "Super Admin created");
