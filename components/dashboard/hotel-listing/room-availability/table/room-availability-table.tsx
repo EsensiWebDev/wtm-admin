@@ -43,7 +43,10 @@ const RoomAvailabilityTable = ({ promises }: RoomAvailabilityTableProps) => {
 
   const [date, setDate] = useQueryState(
     "period",
-    monthYearParser.withDefault(new Date())
+    monthYearParser.withDefault(new Date()).withOptions({
+      shallow: false,
+      clearOnDefault: true,
+    })
   );
 
   const columns = React.useMemo(

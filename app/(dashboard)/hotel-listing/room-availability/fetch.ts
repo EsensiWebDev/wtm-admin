@@ -6,6 +6,8 @@ export const getData = async ({
 }: {
   searchParams: SearchParams;
 }): Promise<RoomAvailabilityTableResponse> => {
+  console.log({ searchParams });
+
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
   const data = [
