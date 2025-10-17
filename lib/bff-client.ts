@@ -1,8 +1,61 @@
-import { authOptions } from "@/lib/auth";
+import {
+  authOptions,
+  refreshAccessToken,
+  type ExtendedToken,
+} from "@/lib/auth";
+import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
+
+type SessionWithTokens = Session & {
+  accessToken?: string;
+  refreshToken?: string;
+  accessTokenExpires?: number | null;
+  error?: string;
+  user?: unknown;
+};
+
+type RefreshAttemptResult =
+  | { kind: "success" }
+  | { kind: "unauthorized" }
+  | { kind: "skipped" }
+  | { kind: "failed" };
 
 const API_BASE_URL =
   process.env.AUTH_API_BASE_URL ?? "http://54.255.206.242:4816/api";
+
+async function attemptTokenRefresh(
+  session: SessionWithTokens
+): Promise<RefreshAttemptResult> {
+  if (!session?.refreshToken) {
+    return { kind: "skipped" };
+  }
+  const refreshTokenInput: ExtendedToken = {
+    accessToken: session.accessToken,
+    refreshToken: session.refreshToken,
+    accessTokenExpires: session.accessTokenExpires,
+    user: session.user,
+  };
+
+  const refreshedToken = await refreshAccessToken(refreshTokenInput);
+
+  if (refreshedToken.error === "RefreshTokenUnauthorized") {
+    return { kind: "unauthorized" };
+  }
+
+  if (refreshedToken.error) {
+    return { kind: "failed" };
+  }
+
+  session.accessToken = refreshedToken.accessToken;
+  session.refreshToken = refreshedToken.refreshToken;
+  session.accessTokenExpires = refreshedToken.accessTokenExpires ?? null;
+  if (refreshedToken.user) {
+    session.user = refreshedToken.user as typeof session.user;
+  }
+  session.error = undefined;
+
+  return { kind: "success" };
+}
 
 type BffFetchOptions = RequestInit & {
   /**
@@ -19,9 +72,11 @@ export async function bffFetch(
   input: string,
   { onError, headers, ...init }: BffFetchOptions = {}
 ) {
-  const session = await getServerSession(authOptions);
+  const session = (await getServerSession(
+    authOptions
+  )) as SessionWithTokens | null;
 
-  if (!session?.accessToken) {
+  if (!session || !session.accessToken) {
     return new Response(
       JSON.stringify({
         status: 401,
@@ -43,14 +98,54 @@ export async function bffFetch(
 
   const normalizedHeaders = new Headers(headers);
   normalizedHeaders.set("Authorization", `Bearer ${session.accessToken}`);
-  normalizedHeaders.set("Cookie", `refresh_token=${session.refreshToken}`);
+  if (session.refreshToken) {
+    normalizedHeaders.set("Cookie", `refresh_token=${session.refreshToken}`);
+  } else {
+    normalizedHeaders.delete("Cookie");
+  }
   normalizedHeaders.set("Content-Type", "application/json");
 
-  const response = await fetch(url, {
+  let response = await fetch(url, {
     ...init,
     headers: normalizedHeaders,
     cache: "no-store",
   });
+
+  if (response.status === 500) {
+    const refreshResult = await attemptTokenRefresh(session);
+
+    console.log({ refreshResult });
+
+    if (refreshResult.kind === "success" && session.accessToken) {
+      normalizedHeaders.set("Authorization", `Bearer ${session.accessToken}`);
+
+      if (session.refreshToken) {
+        normalizedHeaders.set(
+          "Cookie",
+          `refresh_token=${session.refreshToken}`
+        );
+      }
+
+      response = await fetch(url, {
+        ...init,
+        headers: normalizedHeaders,
+        cache: "no-store",
+      });
+    } else if (refreshResult.kind === "unauthorized") {
+      return new Response(
+        JSON.stringify({
+          status: 401,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+  }
 
   if (!response.ok && onError) {
     return onError(response);

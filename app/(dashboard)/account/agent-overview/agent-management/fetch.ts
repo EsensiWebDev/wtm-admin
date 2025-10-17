@@ -1,5 +1,6 @@
 import { PromoGroup } from "@/app/(dashboard)/promo-group/types";
-import { apiCall, buildQueryParams } from "@/lib/utils";
+import { apiCall } from "@/lib/api";
+import { buildQueryParams } from "@/lib/utils";
 import { ApiResponse, SearchParams } from "@/types";
 import { Agent } from "./types";
 

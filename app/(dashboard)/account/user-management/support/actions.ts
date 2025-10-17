@@ -2,7 +2,7 @@
 
 import { CreateSupportSchema } from "@/components/dashboard/account/user-management/support/dialog/create-support-dialog";
 import { EditSupportSchema } from "@/components/dashboard/account/user-management/support/dialog/edit-support-dialog";
-import { apiCall } from "@/lib/utils";
+import { apiCall } from "@/lib/api";
 import { revalidatePath } from "next/cache";
 
 export async function createSupport(input: CreateSupportSchema) {

@@ -59,12 +59,12 @@ function extractRefreshToken(setCookieHeader: string | null) {
   return match?.[1] ?? null;
 }
 
-type ExtendedToken = JWT & {
+export type ExtendedToken = JWT & {
   refreshToken?: string;
   accessTokenExpires?: number | null;
 };
 
-async function refreshAccessToken(
+export async function refreshAccessToken(
   token: ExtendedToken
 ): Promise<ExtendedToken> {
   if (!token.refreshToken) {
@@ -84,6 +84,13 @@ async function refreshAccessToken(
     });
 
     const data: LoginResponse = await response.json();
+
+    if (response.status === 401) {
+      return {
+        ...token,
+        error: "RefreshTokenUnauthorized",
+      };
+    }
 
     if (!response.ok || data.status !== 200 || !data.data) {
       throw new Error(data.message || "Failed to refresh access token");
@@ -175,7 +182,26 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
+      if (trigger === "update" && session) {
+        const nextAccessToken = (session as Partial<AuthUser>).accessToken;
+        const nextRefreshToken = (session as Partial<AuthUser>).refreshToken;
+        const nextAccessTokenExpires =
+          (session as Partial<AuthUser>).accessTokenExpires ??
+          (typeof token.accessTokenExpires === "number"
+            ? token.accessTokenExpires
+            : null);
+
+        return {
+          ...token,
+          accessToken: nextAccessToken ?? token.accessToken,
+          refreshToken: nextRefreshToken ?? token.refreshToken,
+          accessTokenExpires: nextAccessTokenExpires,
+          user: (session as AuthUser) ?? token.user,
+          error: undefined,
+        } satisfies ExtendedToken;
+      }
+
       if (user) {
         return {
           ...token,

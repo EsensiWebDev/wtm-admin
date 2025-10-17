@@ -1,4 +1,5 @@
-import { apiCall, buildQueryParams } from "@/lib/utils";
+import { apiCall } from "@/lib/api";
+import { buildQueryParams } from "@/lib/utils";
 import { SearchParams } from "@/types";
 import {
   Action,

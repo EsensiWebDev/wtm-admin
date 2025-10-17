@@ -1,6 +1,6 @@
 "use server";
 
-import { apiCall } from "@/lib/utils";
+import { apiCall } from "@/lib/api";
 import { revalidatePath } from "next/cache";
 import { Action } from "./types";
 

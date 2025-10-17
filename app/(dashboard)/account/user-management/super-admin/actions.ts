@@ -2,7 +2,7 @@
 
 import { CreateSuperAdminSchema } from "@/components/dashboard/account/user-management/super-admin/dialog/create-super-admin-dialog";
 import { EditSuperAdminSchema } from "@/components/dashboard/account/user-management/super-admin/dialog/edit-super-admin-dialog";
-import { apiCall } from "@/lib/utils";
+import { apiCall } from "@/lib/api";
 import { revalidatePath } from "next/cache";
 
 export async function createSuperAdmin(input: CreateSuperAdminSchema) {

@@ -5,7 +5,7 @@ import { EditAgentSchema } from "@/components/dashboard/account/agent-overview/a
 import { ExportConfigs } from "@/lib/export-client";
 import { ExportService } from "@/lib/export-service";
 import { ExportColumn, ExportFormat, ExportResult } from "@/lib/export-types";
-import { apiCall } from "@/lib/utils";
+import { apiCall } from "@/lib/api";
 import { SearchParams } from "@/types";
 import { revalidatePath } from "next/cache";
 import { Agent } from "./types";

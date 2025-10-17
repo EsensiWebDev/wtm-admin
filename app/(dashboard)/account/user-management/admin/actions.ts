@@ -2,7 +2,7 @@
 
 import { CreateAdminSchema } from "@/components/dashboard/account/user-management/admin/dialog/create-admin-dialog";
 import { EditAdminSchema } from "@/components/dashboard/account/user-management/admin/dialog/edit-admin-dialog";
-import { apiCall } from "@/lib/utils";
+import { apiCall } from "@/lib/api";
 import { revalidatePath } from "next/cache";
 
 export async function createAdmin(input: CreateAdminSchema) {
