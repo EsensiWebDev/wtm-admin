@@ -1,8 +1,8 @@
 "use client";
 
 import { Menu, X } from "lucide-react";
-import Link from "next/link";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import React from "react";
 import { Logo } from "../logo";
 import { NavDropdown } from "./nav-dropdown";
@@ -56,7 +56,7 @@ export const HeroHeader = () => {
         data-state={menuState && "active"}
         className="bg-primary fixed z-20 w-full border-b backdrop-blur-3xl"
       >
-        <div className="mx-auto max-w-7xl px-6 transition-all duration-300">
+        <div className="px-6 transition-all duration-300">
           <div className="relative flex flex-wrap items-center justify-between gap-6 py-3 lg:gap-0 lg:py-4">
             <div className="flex w-full items-center justify-between gap-12 lg:w-auto">
               {/* <Link
