@@ -28,7 +28,7 @@ export function getRoomAvailabilityTableColumns({
       cell: ({ row }) => row.index + 1,
       enableSorting: false,
       enableHiding: false,
-      size: 40,
+      size: 10,
     },
     {
       id: "hotel_name",
@@ -54,6 +54,7 @@ export function getRoomAvailabilityTableColumns({
       },
       enableColumnFilter: true,
       enableHiding: false,
+      size: 400,
     },
     {
       id: "region",
@@ -81,9 +82,13 @@ export function getRoomAvailabilityTableColumns({
       },
       enableColumnFilter: true,
       enableHiding: false,
+      size: 1000,
     },
     {
       id: "actions",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Actions" />
+      ),
       cell: function Cell({ row }) {
         return (
           <DropdownMenu>
@@ -111,6 +116,7 @@ export function getRoomAvailabilityTableColumns({
           </DropdownMenu>
         );
       },
+      enableHiding: false,
       size: 10,
     },
   ];
