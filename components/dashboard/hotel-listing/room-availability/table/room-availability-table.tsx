@@ -46,6 +46,7 @@ const RoomAvailabilityTable = ({ promises }: RoomAvailabilityTableProps) => {
     monthYearParser.withDefault(new Date()).withOptions({
       shallow: false,
       clearOnDefault: true,
+      startTransition,
     })
   );
 
