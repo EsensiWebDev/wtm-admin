@@ -12,7 +12,7 @@ export const getData = async ({
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
   const queryString = buildQueryParams(searchParams);
-  const url = `/bookings/history${queryString ? `?${queryString}` : ""}`;
+  const url = `/bookings/logs${queryString ? `?${queryString}` : ""}`;
   const apiResponse = await apiCall<HistoryBookingLog[]>(url);
 
   return apiResponse;

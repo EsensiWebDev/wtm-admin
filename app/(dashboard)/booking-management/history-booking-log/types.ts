@@ -4,23 +4,17 @@ export type BookingStatus = "confirmed" | "rejected" | "in review";
 export type PaymentStatus = "paid" | "unpaid";
 
 export interface HistoryBookingLog {
-  booking_code: string;
-  booking_id: number;
-  booking_status: BookingStatus;
-  detail: Detail[];
-  guest_name: string[];
-  payment_status: PaymentStatus;
-}
-
-interface Detail {
-  additional: string[];
   agent_name: string;
+  booking_code: string;
   booking_status: BookingStatus;
-  cancellation_date: string;
-  guest_name: string;
+  capacity: string;
+  check_in_date: string;
+  check_out_date: string;
+  confirm_date: string;
   hotel_name: string;
   payment_status: PaymentStatus;
-  sub_booking_id: string;
+  room_nights: number;
+  room_type_name: string;
 }
 
 export interface HistoryBookingLogTableResponse {
