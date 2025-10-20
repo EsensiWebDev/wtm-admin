@@ -11,9 +11,19 @@ export async function apiCall<TData>(
   const response = await bffFetch(endpoint, options);
 
   if (!response.ok) {
-    const error = await response.json();
-
-    return error;
+    // Try to parse error response as JSON, but fallback to a default error structure
+    try {
+      const errorData = await response.json();
+      return errorData;
+    } catch (error) {
+      // If JSON parsing fails, return a default error structure
+      console.warn("Failed to parse error response as JSON:", error);
+      return {
+        status: response.status,
+        message: response.statusText || "Request failed",
+        data: [] as unknown as TData,
+      };
+    }
   }
 
   const apiResponse: ApiResponse<TData> = await response.json();
