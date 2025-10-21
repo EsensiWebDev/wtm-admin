@@ -1,7 +1,9 @@
 "use client";
 
-import { getData } from "@/app/(dashboard)/hotel-listing/room-availability/fetch";
-import { RoomAvailabilityHotel } from "@/app/(dashboard)/hotel-listing/room-availability/types";
+import {
+  getData,
+  getRoomAvaliableByHotelId,
+} from "@/app/(dashboard)/hotel-listing/room-availability/fetch";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { Button } from "@/components/ui/button";
@@ -20,6 +22,8 @@ import { createParser, useQueryState } from "nuqs";
 import React, { useTransition } from "react";
 import { UpdateRoomAvailabilityDrawer } from "../drawer/update-room-availability-drawer";
 import { getRoomAvailabilityTableColumns } from "./room-availability-columns";
+import { Hotel } from "@/app/(dashboard)/hotel-listing/types";
+import { useQuery } from "@tanstack/react-query";
 
 interface RoomAvailabilityTableProps {
   promises: Promise<[Awaited<ReturnType<typeof getData>>]>;
@@ -37,9 +41,9 @@ const monthYearParser = createParser({
 
 const RoomAvailabilityTable = ({ promises }: RoomAvailabilityTableProps) => {
   const [isPending, startTransition] = useTransition();
-  const [{ data, pageCount }] = React.use(promises);
+  const [{ data, pagination }] = React.use(promises);
   const [rowAction, setRowAction] =
-    React.useState<DataTableRowAction<RoomAvailabilityHotel> | null>(null);
+    React.useState<DataTableRowAction<Hotel> | null>(null);
 
   const [date, setDate] = useQueryState(
     "period",
@@ -61,7 +65,7 @@ const RoomAvailabilityTable = ({ promises }: RoomAvailabilityTableProps) => {
   const { table } = useDataTable({
     data: data || [],
     columns,
-    pageCount,
+    pageCount: pagination?.total_pages || 1,
     getRowId: (originalRow) => originalRow.id,
     shallow: false,
     clearOnDefault: true,

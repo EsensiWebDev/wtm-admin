@@ -1,4 +1,4 @@
-import { RoomAvailabilityHotel } from "@/app/(dashboard)/hotel-listing/room-availability/types";
+import { Hotel } from "@/app/(dashboard)/hotel-listing/types";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,13 +14,13 @@ import React from "react";
 
 interface GetRoomAvailabilityTableColumnsProps {
   setRowAction: React.Dispatch<
-    React.SetStateAction<DataTableRowAction<RoomAvailabilityHotel> | null>
+    React.SetStateAction<DataTableRowAction<Hotel> | null>
   >;
 }
 
 export function getRoomAvailabilityTableColumns({
   setRowAction,
-}: GetRoomAvailabilityTableColumnsProps): ColumnDef<RoomAvailabilityHotel>[] {
+}: GetRoomAvailabilityTableColumnsProps): ColumnDef<Hotel>[] {
   return [
     {
       id: "no",
