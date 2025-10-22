@@ -1,8 +1,10 @@
+"use server";
+
 import { ApiResponse, SearchParams } from "@/types";
 import { Hotel } from "../types";
 import { buildQueryParams } from "@/lib/utils";
 import { apiCall } from "@/lib/api";
-import { RoomAvailability } from "./types";
+import { RoomAvailabilityHotel } from "./types";
 
 export const getData = async ({
   searchParams,
@@ -22,12 +24,8 @@ export const getRoomAvaliableByHotelId = async ({
 }: {
   hotel_id: string;
   period: string;
-}): Promise<ApiResponse<RoomAvailability[]>> => {
-  console.log("CALL API ROOM AVAILABLE");
-  const url = `/hotels/room-available?hotel_id=${hotel_id}&period=${period}`;
-  const apiResponse = await apiCall<RoomAvailability[]>(url);
-
-  console.log({ apiResponse });
-
+}): Promise<ApiResponse<RoomAvailabilityHotel[]>> => {
+  const url = `/hotels/room-available?hotel_id=${hotel_id}&month=${period}`;
+  const apiResponse = await apiCall<RoomAvailabilityHotel[]>(url);
   return apiResponse;
 };

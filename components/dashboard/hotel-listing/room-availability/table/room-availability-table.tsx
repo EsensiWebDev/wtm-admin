@@ -31,11 +31,11 @@ interface RoomAvailabilityTableProps {
 
 const monthYearParser = createParser({
   parse: (value) => {
-    const [month, year] = value.split("-").map(Number);
+    const [year, month] = value.split("-").map(Number);
     return new Date(year, month - 1);
   },
   serialize: (value) => {
-    return format(value, "MM-yyyy");
+    return format(value, "yyyy-MM");
   },
 });
 
@@ -53,6 +53,20 @@ const RoomAvailabilityTable = ({ promises }: RoomAvailabilityTableProps) => {
       startTransition,
     })
   );
+
+  const query = useQuery({
+    queryKey: ["room-availability", format(date, "yyyy-MM")],
+    queryFn: async () => {
+      const data = await getRoomAvaliableByHotelId({
+        hotel_id: "1",
+        period: format(date, "yyyy-MM"),
+      });
+      return data;
+    },
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    enabled: rowAction?.variant === "update" || rowAction?.variant === "detail",
+  });
 
   const columns = React.useMemo(
     () =>
@@ -103,10 +117,11 @@ const RoomAvailabilityTable = ({ promises }: RoomAvailabilityTableProps) => {
 
       <UpdateRoomAvailabilityDrawer
         isEdit={rowAction?.variant === "update"}
+        isLoading={query.isPending}
         open={
           rowAction?.variant === "update" || rowAction?.variant === "detail"
         }
-        roomAvailabilityHotel={rowAction?.row.original ?? null}
+        roomAvailabilityHotel={query.data}
         onOpenChange={() => setRowAction(null)}
         date={date}
         setDate={setDate}
