@@ -1,9 +1,12 @@
+"use server";
+
 import { Option } from "@/types/data-table";
 import { Promo } from "./types";
 
 import { ApiResponse, SearchParams } from "@/types";
 import { buildQueryParams } from "@/lib/utils";
 import { apiCall } from "@/lib/api";
+import { Hotel } from "../hotel-listing/types";
 
 export const getData = async ({
   searchParams,
@@ -15,6 +18,76 @@ export const getData = async ({
   const apiResponse = await apiCall<Promo[]>(url);
 
   return apiResponse;
+};
+
+export const getHotelOptions = async (): Promise<Option[]> => {
+  try {
+    const apiResponse = await apiCall<Hotel[]>("/hotels");
+
+    if (apiResponse.status === 200 && Array.isArray(apiResponse.data)) {
+      return apiResponse.data.map((hotel) => ({
+        label: hotel.name,
+        value: hotel.id.toString(), // Using hotel ID now
+      }));
+    }
+
+    // Fallback to empty array if API call fails
+    return [];
+  } catch (error) {
+    console.error("Error fetching hotel options:", error);
+    return [];
+  }
+};
+
+export const getRoomTypeOptionsByHotelId = async (
+  hotelId: string
+): Promise<Option[]> => {
+  try {
+    const apiResponse = await apiCall<{ id: number; name: string }[]>(
+      `/hotels/room-types?hotel_id=${hotelId}`
+    );
+
+    if (apiResponse.status === 200 && Array.isArray(apiResponse.data)) {
+      return apiResponse.data.map((room) => ({
+        label: room.name,
+        value: room.id.toString(), // Convert to string to match Option type
+      }));
+    }
+
+    // Fallback to empty array if API call fails
+    return [];
+  } catch (error) {
+    console.error("Error fetching room type options:", error);
+    return [];
+  }
+};
+
+export const getBedTypeOptionsByRoomTypeId = async (
+  roomTypeId: string
+): Promise<Option[]> => {
+  try {
+    const apiResponse = await apiCall<{ id: number; name: string }[]>(
+      `/hotels/bed-types?room_type_id=${roomTypeId}`
+    );
+
+    if (apiResponse.status === 200 && Array.isArray(apiResponse.data)) {
+      return apiResponse.data.map((bedType) => ({
+        label: bedType.name,
+        value: bedType.id.toString(), // Convert to string to match Option type
+      }));
+    }
+
+    // Fallback to empty array if API call fails
+    return [
+      {
+        label: "test dummy",
+        value: "1",
+      },
+    ];
+  } catch (error) {
+    console.error("Error fetching bed type options:", error);
+    return [];
+  }
 };
 
 export const getCompanyOptions = async () => {
