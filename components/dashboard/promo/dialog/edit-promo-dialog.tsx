@@ -95,8 +95,12 @@ const EditPromoDialog = ({
       promo_code: promo?.promo_code || "",
       promo_type: promoTypeConversion(promo?.promo_type) || "1",
       total_night: 0,
-      start_date: promo?.promo_start_date || "",
-      end_date: promo?.promo_end_date || "",
+      start_date: promo?.promo_start_date
+        ? new Date(promo.promo_start_date).toISOString()
+        : "",
+      end_date: promo?.promo_end_date
+        ? new Date(promo.promo_end_date).toISOString()
+        : "",
       is_active: promo?.is_active || true,
     },
   });
