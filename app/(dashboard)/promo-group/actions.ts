@@ -233,35 +233,7 @@ export async function removePromoGroupMembers(input: {
   }
 }
 
-export async function editPromoGroupMembers(
-  id: string,
-  members: PromoGroupMembers[]
-): Promise<ActionResponse> {
-  console.log("Edit Promo Members:");
-  console.log({ id, members });
-
-  // Simulate API call delay
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  // Simulate success response
-  return { success: true, message: `Members has been edited` };
-}
-
 // Promos
-export async function editPromoGroupPromos(
-  id: string,
-  promos: PromoGroupPromos[]
-): Promise<ActionResponse> {
-  console.log("Edit Promo Group Promos:");
-  console.log({ id, promos });
-
-  // Simulate API call delay
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  // Simulate success response
-  return { success: true, message: `Promos has been updated` };
-}
-
 export async function addPromoGroupPromos(
   input: AddPromoSchemaType & { promo_group_id: string }
 ) {
@@ -306,6 +278,54 @@ export async function addPromoGroupPromos(
         error instanceof Error
           ? error.message
           : "Failed to add promo to promo group",
+    };
+  }
+}
+
+export async function removePromoGroupPromos(input: {
+  promo_id: number;
+  promo_group_id: number;
+}): Promise<ActionResponse> {
+  try {
+    const body = {
+      ...input,
+    };
+
+    const response = await apiCall("promo-groups/promo", {
+      method: "DELETE",
+      body: JSON.stringify(body),
+    });
+
+    if (response.status !== 200) {
+      return {
+        success: false,
+        message: response.message || "Failed to remove promo group promo",
+      };
+    }
+
+    revalidatePath("/promo-group/[slug]/edit", "layout");
+
+    return {
+      success: true,
+      message: response.message || "Promo has been removed",
+    };
+  } catch (error) {
+    console.error("Error removing promo group promo:", error);
+
+    // Handle API error responses with specific messages
+    if (error && typeof error === "object" && "message" in error) {
+      return {
+        success: false,
+        message: error.message as string,
+      };
+    }
+
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to remove promo group promo",
     };
   }
 }
