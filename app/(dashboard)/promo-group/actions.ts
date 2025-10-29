@@ -10,6 +10,7 @@ import {
 } from "./types";
 import { AddMemberPromoGroupSchemaType } from "@/components/dashboard/promo-group/dialog/add-member-promo-group-dialog";
 import { AddAgentCompanySchema } from "@/components/dashboard/promo-group/dialog/add-agent-company-dialog";
+import { AddPromoSchemaType } from "@/components/dashboard/promo-group/dialog/add-promo-dialog";
 
 // Define a standard response type
 interface ActionResponse {
@@ -86,7 +87,7 @@ export async function editPromoGroup(
   return { success: true, message: `Promo edited` };
 }
 
-// Promo Group Members
+// Members
 export async function addPromoGroupMembers(
   input: AddMemberPromoGroupSchemaType & { promo_group_id: string }
 ): Promise<ActionResponse> {
@@ -157,7 +158,7 @@ export async function addPromoGroupMembersByAgentCompany(
       };
     }
 
-    revalidatePath("/promo-group", "layout");
+    revalidatePath("/promo-group/[slug]/edit", "layout");
 
     return {
       success: true,
@@ -205,7 +206,7 @@ export async function removePromoGroupMembers(input: {
       };
     }
 
-    revalidatePath("/promo-group", "layout");
+    revalidatePath("/promo-group/[slug]/edit", "layout");
 
     return {
       success: true,
@@ -246,7 +247,7 @@ export async function editPromoGroupMembers(
   return { success: true, message: `Members has been edited` };
 }
 
-// Promo Group Promos
+// Promos
 export async function editPromoGroupPromos(
   id: string,
   promos: PromoGroupPromos[]
@@ -259,4 +260,52 @@ export async function editPromoGroupPromos(
 
   // Simulate success response
   return { success: true, message: `Promos has been updated` };
+}
+
+export async function addPromoGroupPromos(
+  input: AddPromoSchemaType & { promo_group_id: string }
+) {
+  try {
+    const body = {
+      promo_group_id: Number(input.promo_group_id),
+      promo_id: Number(input.promo_id),
+    };
+
+    const response = await apiCall("promo-groups/promo", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+
+    if (response.status !== 200) {
+      return {
+        success: false,
+        message: response.message || "Failed to add promo to promo group",
+      };
+    }
+
+    revalidatePath("/promo-group/[slug]/edit", "layout");
+
+    return {
+      success: true,
+      message: response.message || "Promo has been added",
+    };
+  } catch (error) {
+    console.error("Error adding promo to promo group:", error);
+
+    // Handle API error responses with specific messages
+    if (error && typeof error === "object" && "message" in error) {
+      return {
+        success: false,
+        message: error.message as string,
+      };
+    }
+
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to add promo to promo group",
+    };
+  }
 }

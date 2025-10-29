@@ -26,7 +26,6 @@ const PromoDetailsCard = ({
   pageCount,
 }: PromoDetailsCardProps) => {
   const [localPromos, setLocalPromos] = useState<PromoGroupPromos[]>(promos);
-  const [isPending, startTransition] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [promoToDelete, setPromoToDelete] = useState<PromoGroupPromos | null>(
     null
@@ -110,31 +109,6 @@ const PromoDetailsCard = ({
     clearOnDefault: true,
   });
 
-  const handleAddPromo = async (promo: PromoGroupPromos) => {
-    const newPromos = [...localPromos, promo];
-    setLocalPromos(newPromos);
-
-    // Update on server
-    startTransition(true);
-    try {
-      const result = await editPromoGroupPromos(promoGroupId, newPromos);
-      if (result.success) {
-        toast.success("Promo added to group successfully");
-      } else {
-        toast.error("Failed to add promo to group");
-        // Revert the local state
-        setLocalPromos(localPromos);
-      }
-    } catch (error) {
-      console.error("Error adding promo:", error);
-      toast.error("Failed to add promo to group");
-      // Revert the local state
-      setLocalPromos(localPromos);
-    } finally {
-      startTransition(false);
-    }
-  };
-
   const handleDeleteClick = (promo: PromoGroupPromos) => {
     setPromoToDelete(promo);
     setDeleteDialogOpen(true);
@@ -188,10 +162,7 @@ const PromoDetailsCard = ({
         <div className="relative">
           <DataTable table={table}>
             <DataTableToolbar table={table}>
-              <AddPromoDialog
-                onAdd={handleAddPromo}
-                currentPromos={localPromos}
-              />
+              <AddPromoDialog promoGroupId={promoGroupId} />
             </DataTableToolbar>
           </DataTable>
         </div>

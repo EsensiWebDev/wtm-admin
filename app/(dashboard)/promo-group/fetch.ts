@@ -1,3 +1,5 @@
+"use server";
+
 import { apiCall } from "@/lib/api";
 import { buildQueryParams } from "@/lib/utils";
 import { ApiResponse, SearchParams } from "@/types";
@@ -73,15 +75,19 @@ export const getPromoGroupMembersById = async (
   return apiResponse;
 };
 
-// Search promos with query (for AsyncSelect)
-export const searchPromos = async (
-  query?: string
-): Promise<ApiResponse<PromoGroupPromos[]>> => {
-  const queryString = buildQueryParams({
-    search: query,
-  });
-  const url = `/promos${queryString ? `?${queryString}` : ""}`;
-  const apiResponse = await apiCall<PromoGroupPromos[]>(url);
+export const getUnassignedPromos = async (
+  promo_group_id: string,
+  searchKey: string
+) => {
+  const url = `/promo-groups/unassigned-promos?promo_group_id=${promo_group_id}`;
+  const apiResponse = await apiCall<{ id: number; name: string }[]>(url);
 
-  return apiResponse;
+  if (apiResponse.status === 200 && Array.isArray(apiResponse.data)) {
+    return apiResponse.data.map((promo) => ({
+      label: promo.name,
+      value: promo.id.toString(),
+    }));
+  }
+
+  return [];
 };
