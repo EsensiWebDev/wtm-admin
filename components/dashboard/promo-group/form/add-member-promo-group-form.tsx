@@ -38,13 +38,13 @@ export function AddMemberPromoGroupForm<T extends FieldValues>({
   companyOptions,
   onCompanyChange,
 }: AddMemberPromoGroupFormProps<T>) {
-  const selectedCompany = form.watch("company" as FieldPath<T>);
+  const selectedCompany = form.watch("agent_company_id" as FieldPath<T>);
   const {
     data: agentOptions,
     isLoading: isLoadingAgents,
     isError: isErrorAgents,
   } = useQuery({
-    queryKey: ["bed-type-options", selectedCompany],
+    queryKey: ["agent-options", selectedCompany],
     queryFn: async () => {
       if (!selectedCompany) return [];
       return getAgentByCompanyId(selectedCompany);
@@ -62,7 +62,7 @@ export function AddMemberPromoGroupForm<T extends FieldValues>({
       >
         <FormField
           control={form.control}
-          name={"company" as FieldPath<T>}
+          name={"agent_company_id" as FieldPath<T>}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Agent Company</FormLabel>
@@ -92,7 +92,7 @@ export function AddMemberPromoGroupForm<T extends FieldValues>({
         />
         <FormField
           control={form.control}
-          name={"memberId" as FieldPath<T>}
+          name={"member_id" as FieldPath<T>}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Member Name</FormLabel>

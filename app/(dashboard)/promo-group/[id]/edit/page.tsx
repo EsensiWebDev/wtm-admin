@@ -44,6 +44,7 @@ const PromoGroupEditPage = async ({
         <MembersCard
           members={allMembers.data || []}
           companyOptions={companyOptions}
+          promoGroupId={id}
         />
         <PromoDetailsCard
           promos={promoGroup.data}

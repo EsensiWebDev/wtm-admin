@@ -11,30 +11,14 @@ import AddMemberPromoGroupDialog from "./dialog/add-member-promo-group-dialog";
 interface MembersCardProps {
   members: PromoGroupMembers[];
   companyOptions: Option[];
+  promoGroupId: string;
 }
 
-export function MembersCard({ members, companyOptions }: MembersCardProps) {
-  // const [localMembers, setLocalMembers] =
-  //   React.useState<PromoGroupMembers[]>(members);
-
-  // const [openSaveDialog, setOpenSaveDialog] = React.useState(false);
-  // const [isSavePending, startSaveTransition] = React.useTransition();
-
-  // const onAddAgentCompany = () => {
-  //   console.log("Add agent company clicked");
-  // };
-
-  // const onSaveChanges = () => {
-  //   startSaveTransition(async () => {
-  //     toast.promise(editPromoGroupMembers("1", localMembers), {
-  //       success: (data) => data.message,
-  //       error: "Failed to edit members",
-  //     });
-  //     setOpenSaveDialog(false);
-  //     console.log("Save changes clicked");
-  //   });
-  // };
-
+export function MembersCard({
+  members,
+  companyOptions,
+  promoGroupId,
+}: MembersCardProps) {
   const onRemoveMember = (id: number) => {
     // setLocalMembers((prevMembers) =>
     //   prevMembers.filter((member) => member.id !== id)
@@ -49,7 +33,10 @@ export function MembersCard({ members, companyOptions }: MembersCardProps) {
       <CardContent className="space-y-4">
         {/* Action Buttons */}
         <div className="flex gap-2">
-          <AddMemberPromoGroupDialog companyOptions={companyOptions} />
+          <AddMemberPromoGroupDialog
+            companyOptions={companyOptions}
+            promoGroupId={promoGroupId}
+          />
           <AddAgentCompanyDialog companyOptions={companyOptions} />
         </div>
 
@@ -81,24 +68,6 @@ export function MembersCard({ members, companyOptions }: MembersCardProps) {
             </div>
           ))}
         </div>
-
-        {/* Save Changes Button */}
-        {/* <div className="pt-4">
-          <Button
-            size="sm"
-            className="text-xs "
-            onClick={() => setOpenSaveDialog(true)}
-          >
-            Save Changes
-          </Button>
-          <ConfirmationDialog
-            open={openSaveDialog}
-            onOpenChange={setOpenSaveDialog}
-            onConfirm={onSaveChanges}
-            onCancel={() => setOpenSaveDialog(false)}
-            isLoading={isSavePending}
-          />
-        </div> */}
       </CardContent>
     </Card>
   );
