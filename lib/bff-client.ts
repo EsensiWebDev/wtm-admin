@@ -116,10 +116,8 @@ export async function bffFetch(
     cache: "no-store",
   });
 
-  if (response.status === 500) {
+  if (response.status === 500 || response.status === 401) {
     const refreshResult = await attemptTokenRefresh(session);
-
-    console.log({ refreshResult });
 
     if (refreshResult.kind === "success" && session.accessToken) {
       normalizedHeaders.set("Authorization", `Bearer ${session.accessToken}`);

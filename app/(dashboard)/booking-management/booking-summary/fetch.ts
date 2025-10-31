@@ -1,8 +1,8 @@
+import { apiCall } from "@/lib/api";
+import { buildQueryParams } from "@/lib/utils";
 import { ApiResponse, SearchParams } from "@/types";
 import { Option } from "@/types/data-table";
 import { BookingSummary } from "./types";
-import { buildQueryParams } from "@/lib/utils";
-import { apiCall } from "@/lib/api";
 
 export const getData = async ({
   searchParams,

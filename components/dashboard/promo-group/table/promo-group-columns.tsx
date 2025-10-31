@@ -33,8 +33,8 @@ export function getPromoGroupTableColumns({
       size: 30,
     },
     {
-      id: "name",
-      accessorKey: "name",
+      id: "search",
+      accessorKey: "search",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Group Name" />
       ),

@@ -63,8 +63,8 @@ export function getPromoTableColumns({
       enableHiding: false,
     },
     {
-      id: "name",
-      accessorKey: "name",
+      id: "search",
+      accessorKey: "search",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Promo Name" />
       ),

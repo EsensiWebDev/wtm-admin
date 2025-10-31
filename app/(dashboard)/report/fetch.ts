@@ -1,8 +1,8 @@
+import { apiCall } from "@/lib/api";
+import { buildQueryParams } from "@/lib/utils";
+import { ApiResponse } from "@/types";
 import { SearchParams } from "nuqs";
 import { ReportAgent, ReportAgentDetail, ReportSummary } from "./types";
-import { ApiResponse } from "@/types";
-import { buildQueryParams } from "@/lib/utils";
-import { apiCall } from "@/lib/api";
 
 export const getReportSummary = async ({
   searchParams,
@@ -21,25 +21,25 @@ export const getReportAgent = async ({
 }: {
   searchParams: SearchParams;
 }): Promise<ApiResponse<ReportAgent[]>> => {
-  // return {
-  //   data: [
-  //     {
-  //       agent_company: "Dummy Company",
-  //       agent_name: "Dummy Agent",
-  //       cancelled_booking: 1,
-  //       confirmed_booking: 1,
-  //       hotel_name: "Dummy Hotel",
-  //     },
-  //   ],
-  //   message: "success",
-  //   pagination: {
-  //     limit: 10,
-  //     page: 1,
-  //     total: 1,
-  //     total_pages: 1,
-  //   },
-  //   status: 200,
-  // };
+  return {
+    data: [
+      {
+        agent_company: "Dummy Company",
+        agent_name: "Dummy Agent",
+        cancelled_booking: 1,
+        confirmed_booking: 1,
+        hotel_name: "Dummy Hotel",
+      },
+    ],
+    message: "success",
+    pagination: {
+      limit: 10,
+      page: 1,
+      total: 1,
+      total_pages: 1,
+    },
+    status: 200,
+  };
 
   const queryString = buildQueryParams(searchParams);
   const url = `/reports/agent${queryString ? `?${queryString}` : ""}`;
@@ -51,27 +51,27 @@ export const getReportAgent = async ({
 export const getReportAgentDetail = async (): Promise<
   ApiResponse<ReportAgentDetail[]>
 > => {
-  // return {
-  //   data: [
-  //     {
-  //       additional: "dummy",
-  //       capacity: "dummy",
-  //       date_in: "2025-10-23T02:21:55+07:00",
-  //       date_out: "2025-10-24T02:21:55+07:00",
-  //       guest_name: "dummy",
-  //       room_type: "dummy",
-  //       status_booking: "dummy",
-  //     },
-  //   ],
-  //   message: "dummy",
-  //   pagination: {
-  //     limit: 10,
-  //     page: 1,
-  //     total: 1,
-  //     total_pages: 1,
-  //   },
-  //   status: 200,
-  // };
+  return {
+    data: [
+      {
+        additional: "dummy",
+        capacity: "dummy",
+        date_in: "2025-10-23T02:21:55+07:00",
+        date_out: "2025-10-24T02:21:55+07:00",
+        guest_name: "dummy",
+        room_type: "dummy",
+        status_booking: "dummy",
+      },
+    ],
+    message: "dummy",
+    pagination: {
+      limit: 10,
+      page: 1,
+      total: 1,
+      total_pages: 1,
+    },
+    status: 200,
+  };
 
   const searchParams: SearchParams = {
     limit: "10",

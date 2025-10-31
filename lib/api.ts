@@ -16,7 +16,6 @@ export async function apiCall<TData>(
 
     // Try to parse error response as JSON, but fallback to a default error structure
     try {
-      console.log({ response });
       const errorData = await response.json();
       return errorData;
     } catch (error) {
