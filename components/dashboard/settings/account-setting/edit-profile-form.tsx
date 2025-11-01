@@ -23,7 +23,7 @@ import z from "zod";
 const profileSchema = z.object({
   username: z.string().min(1, "Username is required"),
   full_name: z.string().min(1, "Full name is required"),
-  agent_company: z.string().min(1, "Agent company is required"),
+  email: z.string().email().min(1, "Email is required"),
   phone: z
     .string()
     .min(1, "Phone number is required")
@@ -48,14 +48,14 @@ const EditProfileForm = ({ defaultValues }: EditProfileFormProps) => {
     defaultValues: {
       username: defaultValues.username,
       full_name: defaultValues.full_name,
-      agent_company: "DUMMY",
+      email: defaultValues.email,
       phone: defaultValues.phone,
     },
   });
 
   function onSubmit(values: ProfileSchema) {
     setIsLoading(true);
-    toast.promise(updateAccountProfile(values, defaultValues.email), {
+    toast.promise(updateAccountProfile(values), {
       loading: "Saving profile changes...",
       success: (data) => {
         setIsLoading(false);
@@ -97,7 +97,7 @@ const EditProfileForm = ({ defaultValues }: EditProfileFormProps) => {
                 control={form.control}
                 name="full_name"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="col-span-2">
                     <FormLabel className="text-sm font-medium">
                       Full Name
                     </FormLabel>
@@ -110,14 +110,12 @@ const EditProfileForm = ({ defaultValues }: EditProfileFormProps) => {
               />
               <FormField
                 control={form.control}
-                name="agent_company"
+                name="email"
                 render={({ field }) => (
                   <FormItem className="col-span-2">
-                    <FormLabel className="text-sm font-medium">
-                      Agent Company
-                    </FormLabel>
+                    <FormLabel className="text-sm font-medium">Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter agent company" {...field} />
+                      <Input placeholder="Enter email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

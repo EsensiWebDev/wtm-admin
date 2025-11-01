@@ -8,14 +8,11 @@ import { AccountSettingResponse } from "./types";
 
 // Simulate updating account profile
 export async function updateAccountProfile(
-  input: ProfileSchema,
-  email: string
+  input: ProfileSchema
 ): Promise<AccountSettingResponse> {
   try {
     const body = {
-      full_name: input.full_name,
-      phone: input.phone,
-      email,
+      ...input,
     };
 
     const response = await apiCall(`profile`, {
@@ -63,7 +60,7 @@ export async function changePassword(
   try {
     const body = {
       ...input,
-      username,
+      username: "superadmin",
     };
 
     const response = await apiCall(`profile/setting`, {
