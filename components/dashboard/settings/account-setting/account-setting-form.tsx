@@ -39,9 +39,9 @@ interface AccountSettingFormProps {
 
 const AccountSettingForm = ({ defaultValues }: AccountSettingFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const {
-    data: { user },
-  } = useSession();
+  const { data: session } = useSession();
+
+  const user = session?.user;
 
   const form = useForm<PasswordChangeSchema>({
     resolver: zodResolver(passwordChangeSchema),
@@ -54,7 +54,14 @@ const AccountSettingForm = ({ defaultValues }: AccountSettingFormProps) => {
 
   function onSubmit(values: PasswordChangeSchema) {
     setIsLoading(true);
-    toast.promise(changePassword(values, user?.username), {
+
+    if (!user?.username) {
+      toast.error("User not found");
+      setIsLoading(false);
+      return;
+    }
+
+    toast.promise(changePassword(values, user.username), {
       loading: "Changing password...",
       success: (data) => {
         setIsLoading(false);
