@@ -48,8 +48,8 @@ export function getBookingSummaryTableColumns({
       size: 40,
     },
     {
-      id: "guest_name",
-      accessorKey: "guest_name",
+      id: "search",
+      accessorKey: "search",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Guest Name" />
       ),
@@ -110,8 +110,8 @@ export function getBookingSummaryTableColumns({
       cell: ({ row }) => row.original.booking_id,
     },
     {
-      id: "booking_status",
-      accessorKey: "booking_status",
+      id: "booking_status_id",
+      accessorKey: "booking_status_id",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Booking Status" />
       ),
