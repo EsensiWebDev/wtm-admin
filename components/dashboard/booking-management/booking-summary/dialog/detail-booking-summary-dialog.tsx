@@ -43,6 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { DataTableRowAction } from "@/types/data-table";
 import {
   IconApi,
@@ -156,23 +157,30 @@ const getDetailBookingColumns = ({
       const [pendingValue, setPendingValue] = React.useState<string | null>(
         null
       );
+      const [reason, setReason] = React.useState("");
 
       const handleConfirm = async () => {
         if (!pendingValue) return;
         startUpdateTransition(() => {
           (async () => {
             try {
-              const result = await updateBookingStatus(
-                String(row.original.sub_booking_id),
-                pendingValue
-              );
+              const result = await updateBookingStatus({
+                booking_detail_id: String(row.original.sub_booking_id),
+                status_id: pendingValue,
+                reason: reason.trim(),
+              });
               if (result?.success) {
                 setSelectValue(pendingValue as BookingStatus);
                 setPendingValue(null);
                 setDialogOpen(false);
-                toast.success("Booking status updated successfully");
+                setReason("");
+                toast.success(
+                  result.message || "Booking status updated successfully"
+                );
               } else {
-                toast.error("Failed to update booking status");
+                toast.error(
+                  result?.message || "Failed to update booking status"
+                );
               }
             } catch (error) {
               void error;
@@ -185,6 +193,7 @@ const getDetailBookingColumns = ({
       const handleCancel = () => {
         setDialogOpen(false);
         setPendingValue(null);
+        setReason("");
       };
 
       const getStatusColor = (value: string) => {
@@ -224,7 +233,7 @@ const getDetailBookingColumns = ({
               <SelectItem value="in review">In Review</SelectItem>
             </SelectContent>
           </Select>
-          <ConfirmationDialog
+          {/* <ConfirmationDialog
             open={dialogOpen}
             onOpenChange={setDialogOpen}
             onConfirm={handleConfirm}
@@ -232,7 +241,46 @@ const getDetailBookingColumns = ({
             isLoading={isUpdatePending}
             title="Change Booking Status"
             description="You're about to update the booking status for this booking."
-          />
+          /> */}
+          <ConfirmationDialog
+            open={dialogOpen}
+            onOpenChange={setDialogOpen}
+            onConfirm={handleConfirm}
+            onCancel={handleCancel}
+            isLoading={isUpdatePending}
+            title="Change Booking Status"
+            description={`You're about to update the booking status for this booking.\nThis change may affect the booking process.`}
+          >
+            <div className="space-y-2 mt-2">
+              {/* Show the new booking status */}
+              {pendingValue && (
+                <div className="mb-2 flex items-center justify-center gap-2">
+                  <span className="font-semibold">New Booking Status</span>
+                  <span
+                    className={`capitalize inline-block rounded-full px-3 py-1 text-sm font-semibold ${getStatusColor(
+                      pendingValue
+                    )}`}
+                  >
+                    {pendingValue}
+                  </span>
+                </div>
+              )}
+              <Label
+                htmlFor="booking-status-reason"
+                className="block text-sm font-medium "
+              >
+                Notes
+              </Label>
+              <Textarea
+                id="booking-status-reason"
+                className="w-full rounded border bg-gray-200 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                rows={3}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="(Optional) Add a note for changing the booking status."
+              />
+            </div>
+          </ConfirmationDialog>
         </>
       );
     },

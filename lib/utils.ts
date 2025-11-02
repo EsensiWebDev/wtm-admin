@@ -33,3 +33,9 @@ export function buildQueryParams(searchParams: SearchParams): string {
   });
   return queryParams.toString();
 }
+
+export function cleanBody(body: Record<string, any>) {
+  return Object.fromEntries(
+    Object.entries(body).filter(([key, value]) => value != null)
+  );
+}
