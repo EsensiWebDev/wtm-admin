@@ -59,7 +59,7 @@ const AgentControlTable = ({ promises }: AgentControlTableProps) => {
       <DetailAgentControlDialog
         open={rowAction?.variant === "detail"}
         onOpenChange={() => setRowAction(null)}
-        agentControl={rowAction?.row.original ? [rowAction.row.original] : []}
+        agentControl={rowAction?.row.original ? rowAction.row.original : null}
         onSuccess={() => rowAction?.row.toggleSelected(false)}
       />
       {rowAction?.variant === "update" && (

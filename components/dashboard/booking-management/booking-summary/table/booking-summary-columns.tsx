@@ -169,7 +169,7 @@ export function getBookingSummaryTableColumns({
           if (value === "in review") return "text-yellow-600 bg-yellow-100";
           return "";
         };
-        
+
         return (
           <>
             <Label

@@ -20,8 +20,40 @@ import {
 
 interface DetailAgentControlDialogProps
   extends React.ComponentPropsWithoutRef<typeof Dialog> {
-  agentControl: Row<AgentControl>["original"][];
+  agentControl: Row<AgentControl>["original"] | null;
   onSuccess?: () => void;
+}
+
+// Helper function to validate if a string is an absolute URL
+function isValidAbsoluteUrl(url: string): boolean {
+  // If URL starts with "54.255.206.242", it's not a valid absolute URL yet (missing protocol)
+  if (url.startsWith("54.255.206.242")) {
+    return false;
+  }
+
+  try {
+    const parsedUrl = new URL(url);
+    return parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+// Helper function to transform URLs starting with "54.255.206.242"
+function transformImageUrl(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+
+  // If URL already has a protocol, return as is
+  if (isValidAbsoluteUrl(url)) {
+    return url;
+  }
+
+  // If URL starts with "54.255.206.242", prepend "http://"
+  if (url.startsWith("54.255.206.242")) {
+    return `http://${url}`;
+  }
+
+  return url;
 }
 
 export function DetailAgentControlDialog({
@@ -30,24 +62,43 @@ export function DetailAgentControlDialog({
   ...props
 }: DetailAgentControlDialogProps) {
   const [isUpdatePending, startUpdateTransition] = React.useTransition();
-  const [variant, setVariant] = React.useState<"approved" | "rejected" | null>(
+  const [variant, setVariant] = React.useState<"active" | "rejected" | null>(
     null
   );
 
-  // Sample image data - replace with actual data from agentControl
-  const images = [
-    { title: "Agent Selfie Photo" },
-    { title: "Identity Card" },
-    { title: "Certificate" },
-    { title: "Name Card" },
-    { title: "Others" },
-  ];
+  // Map agentControl data to images array for ImageGrid
+  const images = agentControl
+    ? [
+        {
+          title: "Agent Selfie Photo",
+          src: transformImageUrl(agentControl.photo),
+          alt: "Agent Selfie Photo",
+        },
+        {
+          title: "Identity Card",
+          src: transformImageUrl(agentControl.id_card),
+          alt: "Identity Card",
+        },
+        {
+          title: "Certificate",
+          src: transformImageUrl(agentControl.certificate),
+          alt: "Certificate",
+        },
+        {
+          title: "Name Card",
+          src: transformImageUrl(agentControl.name_card),
+          alt: "Name Card",
+        },
+      ]
+    : [];
 
-  function onUpdate({ variant }: { variant: "approved" | "rejected" }) {
+  function onUpdate({ variant }: { variant: "active" | "rejected" }) {
     setVariant(variant);
 
-    startUpdateTransition(async () => {
-      toast.promise(updateAgentStatus("1", variant), {
+    if (!agentControl) return;
+
+    startUpdateTransition(() => {
+      toast.promise(updateAgentStatus(agentControl.id.toString(), variant), {
         loading: "Updating agent status...",
         success: (data) => data.message,
         error: "Failed to update agent status",
@@ -60,18 +111,20 @@ export function DetailAgentControlDialog({
 
   return (
     <Dialog {...props}>
-      <DialogContent className="sm:max-w-6xl">
+      <DialogContent className="sm:max-w-6xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="sr-only">Detail Agent Control</DialogTitle>
         </DialogHeader>
-        <ImageGrid images={images} />
+        <div className="overflow-y-auto flex-grow">
+          <ImageGrid images={images} />
+        </div>
         <DialogFooter className="gap-2 sm:space-x-0 sm:justify-center">
           <Button
             aria-label="Approve Agent"
-            onClick={() => onUpdate({ variant: "approved" })}
-            disabled={isUpdatePending}
+            onClick={() => onUpdate({ variant: "active" })}
+            disabled={isUpdatePending || !agentControl}
           >
-            {variant === "approved" && isUpdatePending && (
+            {variant === "active" && isUpdatePending && (
               <Loader className="mr-2 size-4 animate-spin" aria-hidden="true" />
             )}
             Approve
@@ -80,7 +133,7 @@ export function DetailAgentControlDialog({
             aria-label="Reject Agent"
             variant="destructive"
             onClick={() => onUpdate({ variant: "rejected" })}
-            disabled={isUpdatePending}
+            disabled={isUpdatePending || !agentControl}
           >
             {variant === "rejected" && isUpdatePending && (
               <Loader className="mr-2 size-4 animate-spin" aria-hidden="true" />

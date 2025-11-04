@@ -30,7 +30,8 @@ export function getAgentControlTableColumns({
 }: GetAgentControlTableColumnsProps): ColumnDef<AgentControl>[] {
   const getStatusColor = (value: string) => {
     if (value === "Active") return "text-green-600 bg-green-100";
-    else return "text-red-600 bg-red-100";
+    else if (value === "Reject") return "text-red-600 bg-red-100";
+    else return "text-gray-600 bg-gray-100";
   };
 
   interface StatusCellProps {
@@ -96,7 +97,7 @@ export function getAgentControlTableColumns({
           </SelectTrigger>
           <SelectContent align="end">
             <SelectItem value="Active">Approved</SelectItem>
-            <SelectItem value="rejected">Rejected</SelectItem>
+            <SelectItem value="Reject">Rejected</SelectItem>
           </SelectContent>
         </Select>
         <ConfirmationDialog
@@ -150,7 +151,7 @@ export function getAgentControlTableColumns({
         variant: "multiSelect",
         options: companyOptions,
       },
-      enableColumnFilter: true,
+      enableColumnFilter: false,
     },
     {
       id: "Email",
