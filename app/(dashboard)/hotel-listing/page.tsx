@@ -9,7 +9,7 @@ import { HotelPageProps } from "./types";
 const HotelPage = async (props: HotelPageProps) => {
   const searchParams = await props.searchParams;
   const activeTab =
-    typeof searchParams.tab === "string" ? searchParams.tab : "all";
+    typeof searchParams.status_id === "string" ? searchParams.status_id : "";
 
   const promises = Promise.all([
     getData({
@@ -24,19 +24,19 @@ const HotelPage = async (props: HotelPageProps) => {
         <h1 className="text-3xl font-bold">Hotel Listing</h1>
       </div>
 
-      <Tabs defaultValue="all" className="w-[400px]">
+      <Tabs defaultValue={activeTab} className="w-[400px]">
         <TabsList className="gap-1">
-          <Link href={"?tab=all"} scroll={false}>
-            <TabsTrigger value="all">All</TabsTrigger>
+          <Link href={"?status_id="} scroll={false}>
+            <TabsTrigger value="">All</TabsTrigger>
           </Link>
-          <Link href={"?tab=approved"} scroll={false}>
-            <TabsTrigger value="approved">Approved</TabsTrigger>
+          <Link href={"?status_id=2"} scroll={false}>
+            <TabsTrigger value="2">Approved</TabsTrigger>
           </Link>
-          <Link href={"?tab=in_review"} scroll={false}>
-            <TabsTrigger value="in_review">In Review</TabsTrigger>
+          <Link href={"?status_id=1"} scroll={false}>
+            <TabsTrigger value="1">In Review</TabsTrigger>
           </Link>
-          <Link href={"?tab=rejected"} scroll={false}>
-            <TabsTrigger value="rejected">Rejected</TabsTrigger>
+          <Link href={"?status_id=3"} scroll={false}>
+            <TabsTrigger value="3">Rejected</TabsTrigger>
           </Link>
         </TabsList>
       </Tabs>

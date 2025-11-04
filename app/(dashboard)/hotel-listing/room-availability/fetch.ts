@@ -12,7 +12,7 @@ export const getData = async ({
   searchParams: SearchParams;
 }): Promise<ApiResponse<Hotel[]>> => {
   const queryString = buildQueryParams(searchParams);
-  const url = `/hotels${queryString ? `?${queryString}` : ""}`;
+  const url = `/hotels?status_id=2${queryString ? `&${queryString}` : ""}`;
   const apiResponse = await apiCall<Hotel[]>(url);
 
   return apiResponse;
