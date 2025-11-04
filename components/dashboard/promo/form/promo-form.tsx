@@ -28,7 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { getHotelOptions } from "@/server/general";
 import { useQuery } from "@tanstack/react-query";
@@ -551,7 +550,7 @@ export function PromoForm<T extends FieldValues>({
         </div>
 
         {/* Fifth Row: Active Status */}
-        <div className="grid grid-cols-1">
+        {/* <div className="grid grid-cols-1">
           <FormField
             control={form.control}
             name={"is_active" as FieldPath<T>}
@@ -572,7 +571,7 @@ export function PromoForm<T extends FieldValues>({
               </FormItem>
             )}
           />
-        </div>
+        </div> */}
         {children}
       </form>
     </Form>

@@ -5,15 +5,11 @@ import { EditPromoSchema } from "@/components/dashboard/promo/dialog/edit-promo-
 import { apiCall } from "@/lib/api";
 import { revalidatePath } from "next/cache";
 
-export async function updatePromoStatus(promoId: string, status: boolean) {
+export async function updatePromoStatus(formData: FormData) {
   try {
-    const body = {
-      is_active: status,
-    };
-
-    const response = await apiCall(`promos/${promoId}`, {
+    const response = await apiCall(`promos/status`, {
       method: "PUT",
-      body: JSON.stringify(body),
+      body: formData,
     });
 
     if (response.status !== 200) {
