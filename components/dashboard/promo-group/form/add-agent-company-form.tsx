@@ -56,7 +56,7 @@ export function AddAgentCompanyForm<T extends FieldValues>({
                     </SelectTrigger>
                     <SelectContent>
                       {companyOptions.map((opt) => (
-                        <SelectItem key={opt.label} value={opt.label}>
+                        <SelectItem key={opt.label} value={opt.value}>
                           {opt.label}
                         </SelectItem>
                       ))}
