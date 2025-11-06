@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  getBedTypeOptionsByRoomTypeId,
+  getRoomTypeOptionsByHotelId,
+} from "@/app/(dashboard)/promo/fetch";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -11,6 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   Popover,
   PopoverContent,
@@ -23,8 +28,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { getHotelOptions } from "@/server/general";
+import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import type * as React from "react";
@@ -42,6 +48,55 @@ export function PromoForm<T extends FieldValues>({
   onSubmit,
   children,
 }: PromoFormProps<T>) {
+  const {
+    data: hotelOptions,
+    isLoading: isLoadingHotels,
+    isError: isErrorHotels,
+  } = useQuery({
+    queryKey: ["hotels-options"],
+    queryFn: getHotelOptions,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: 2,
+  });
+
+  // Get selected hotel ID/name
+  const selectedHotelId = form.watch("hotel_name" as FieldPath<T>);
+
+  // Fetch room types based on selected hotel
+  const {
+    data: roomTypeOptions,
+    isLoading: isLoadingRoomTypes,
+    isError: isErrorRoomTypes,
+  } = useQuery({
+    queryKey: ["room-type-options", selectedHotelId],
+    queryFn: async () => {
+      if (!selectedHotelId) return [];
+      return getRoomTypeOptionsByHotelId(selectedHotelId);
+    },
+    enabled: !!selectedHotelId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: 2,
+  });
+
+  // Get selected room type ID
+  const selectedRoomTypeId = form.watch("room_type_id" as FieldPath<T>);
+
+  // Fetch bed types based on selected room type
+  const {
+    data: bedTypeOptions,
+    isLoading: isLoadingBedTypes,
+    isError: isErrorBedTypes,
+  } = useQuery({
+    queryKey: ["bed-type-options", selectedRoomTypeId],
+    queryFn: async () => {
+      if (!selectedRoomTypeId) return [];
+      return getBedTypeOptionsByRoomTypeId(selectedRoomTypeId);
+    },
+    enabled: !!selectedRoomTypeId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: 2,
+  });
+
   return (
     <Form {...form}>
       <form
@@ -52,7 +107,7 @@ export function PromoForm<T extends FieldValues>({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FormField
             control={form.control}
-            name={"name" as FieldPath<T>}
+            name={"promo_name" as FieldPath<T>}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Promo Name</FormLabel>
@@ -65,7 +120,7 @@ export function PromoForm<T extends FieldValues>({
           />
           <FormField
             control={form.control}
-            name={"type" as FieldPath<T>}
+            name={"promo_type" as FieldPath<T>}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Promo Type</FormLabel>
@@ -79,10 +134,10 @@ export function PromoForm<T extends FieldValues>({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="discount">Discount</SelectItem>
-                    <SelectItem value="fixed_price">Fixed Price</SelectItem>
-                    <SelectItem value="room_upgrade">Room Upgrade</SelectItem>
-                    <SelectItem value="benefits">Benefits</SelectItem>
+                    <SelectItem value="1">Discount</SelectItem>
+                    <SelectItem value="2">Fixed Price</SelectItem>
+                    <SelectItem value="3">Room Upgrade</SelectItem>
+                    <SelectItem value="4">Benefits</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -90,11 +145,10 @@ export function PromoForm<T extends FieldValues>({
             )}
           />
           {/* Extra Input Based on Promo Type */}
-          {(form.watch("type" as FieldPath<T>) || "discount") ===
-            "discount" && (
+          {(form.watch("promo_type" as FieldPath<T>) || "1") === "1" && (
             <FormField
               control={form.control}
-              name={"discount_percentage" as FieldPath<T>}
+              name={"detail" as FieldPath<T>}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Discount Percentage (%)</FormLabel>
@@ -115,10 +169,10 @@ export function PromoForm<T extends FieldValues>({
               )}
             />
           )}
-          {form.watch("type" as FieldPath<T>) === "fixed_price" && (
+          {form.watch("promo_type" as FieldPath<T>) === "2" && (
             <FormField
               control={form.control}
-              name={"price_discount" as FieldPath<T>}
+              name={"detail" as FieldPath<T>}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Price Discount (IDR)</FormLabel>
@@ -138,10 +192,10 @@ export function PromoForm<T extends FieldValues>({
               )}
             />
           )}
-          {form.watch("type" as FieldPath<T>) === "room_upgrade" && (
+          {form.watch("promo_type" as FieldPath<T>) === "3" && (
             <FormField
               control={form.control}
-              name={"room_upgrade_to" as FieldPath<T>}
+              name={"detail" as FieldPath<T>}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Room Upgrade To</FormLabel>
@@ -176,10 +230,10 @@ export function PromoForm<T extends FieldValues>({
               )}
             />
           )}
-          {form.watch("type" as FieldPath<T>) === "benefits" && (
+          {form.watch("promo_type" as FieldPath<T>) === "4" && (
             <FormField
               control={form.control}
-              name={"benefits" as FieldPath<T>}
+              name={"detail" as FieldPath<T>}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Benefits</FormLabel>
@@ -197,7 +251,7 @@ export function PromoForm<T extends FieldValues>({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name={"code" as FieldPath<T>}
+            name={"promo_code" as FieldPath<T>}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Promo Code</FormLabel>
@@ -330,32 +384,40 @@ export function PromoForm<T extends FieldValues>({
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
+                  disabled={isLoadingHotels}
                 >
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select hotel" />
+                      {isLoadingHotels ? (
+                        <div className="flex items-center">
+                          <LoadingSpinner className="mr-2 h-4 w-4" />
+                          Loading hotels...
+                        </div>
+                      ) : (
+                        <SelectValue placeholder="Select hotel" />
+                      )}
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="ibis_hotel_convention">
-                      Ibis Hotel & Convention
-                    </SelectItem>
-                    <SelectItem value="atria_hotel">Atria Hotel</SelectItem>
-                    <SelectItem value="grand_hyatt_jakarta">
-                      Grand Hyatt Jakarta
-                    </SelectItem>
-                    <SelectItem value="ritz_carlton_jakarta">
-                      The Ritz-Carlton Jakarta
-                    </SelectItem>
-                    <SelectItem value="hotel_indonesia_kempinski">
-                      Hotel Indonesia Kempinski
-                    </SelectItem>
-                    <SelectItem value="fairmont_jakarta">
-                      Fairmont Jakarta
-                    </SelectItem>
-                    <SelectItem value="jw_marriott_jakarta">
-                      JW Marriott Hotel Jakarta
-                    </SelectItem>
+                    {isLoadingHotels ? (
+                      <SelectItem value="loading" disabled>
+                        Loading hotels...
+                      </SelectItem>
+                    ) : isErrorHotels ? (
+                      <SelectItem value="error" disabled>
+                        Failed to load hotels
+                      </SelectItem>
+                    ) : hotelOptions && hotelOptions.length > 0 ? (
+                      hotelOptions.map((hotel) => (
+                        <SelectItem key={hotel.value} value={hotel.value}>
+                          {hotel.label}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-hotels" disabled>
+                        No hotels available
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -364,34 +426,49 @@ export function PromoForm<T extends FieldValues>({
           />
           <FormField
             control={form.control}
-            name={"room_type" as FieldPath<T>}
+            name={"room_type_id" as FieldPath<T>}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Room Type</FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
+                  value={field.value}
+                  disabled={isLoadingRoomTypes || !selectedHotelId}
                 >
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select room type" />
+                      {isLoadingRoomTypes && selectedHotelId ? (
+                        <div className="flex items-center">
+                          <LoadingSpinner className="mr-2 h-4 w-4" />
+                          Loading room types...
+                        </div>
+                      ) : (
+                        <SelectValue placeholder="Select room type" />
+                      )}
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="standard_room">Standard Room</SelectItem>
-                    <SelectItem value="superior_room">Superior Room</SelectItem>
-                    <SelectItem value="deluxe_room">Deluxe Room</SelectItem>
-                    <SelectItem value="executive_suite">
-                      Executive Suite
-                    </SelectItem>
-                    <SelectItem value="presidential_suite">
-                      Presidential Suite
-                    </SelectItem>
-                    <SelectItem value="business_room">Business Room</SelectItem>
-                    <SelectItem value="family_room">Family Room</SelectItem>
-                    <SelectItem value="ocean_view_room">
-                      Ocean View Room
-                    </SelectItem>
+                    {isLoadingRoomTypes && selectedHotelId ? (
+                      <SelectItem value="loading" disabled>
+                        Loading room types...
+                      </SelectItem>
+                    ) : isErrorRoomTypes ? (
+                      <SelectItem value="error" disabled>
+                        Failed to load room types
+                      </SelectItem>
+                    ) : roomTypeOptions && roomTypeOptions.length > 0 ? (
+                      roomTypeOptions.map((roomType) => (
+                        <SelectItem key={roomType.value} value={roomType.value}>
+                          {roomType.label}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-room-types" disabled>
+                        {selectedHotelId
+                          ? "No room types available"
+                          : "Select a hotel first"}
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -406,21 +483,43 @@ export function PromoForm<T extends FieldValues>({
                 <FormLabel>Bed Type</FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
+                  value={field.value}
+                  disabled={isLoadingBedTypes || !selectedRoomTypeId}
                 >
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select bed type" />
+                      {isLoadingBedTypes && selectedRoomTypeId ? (
+                        <div className="flex items-center">
+                          <LoadingSpinner className="mr-2 h-4 w-4" />
+                          Loading bed types...
+                        </div>
+                      ) : (
+                        <SelectValue placeholder="Select bed type" />
+                      )}
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="single_bed">Single Bed</SelectItem>
-                    <SelectItem value="twin_bed">Twin Bed</SelectItem>
-                    <SelectItem value="double_bed">Double Bed</SelectItem>
-                    <SelectItem value="queen_size">Queen Size</SelectItem>
-                    <SelectItem value="king_size">King Size</SelectItem>
-                    <SelectItem value="2_king_size">2 King Size</SelectItem>
-                    <SelectItem value="sofa_bed">Sofa Bed</SelectItem>
+                    {isLoadingBedTypes && selectedRoomTypeId ? (
+                      <SelectItem value="loading" disabled>
+                        Loading bed types...
+                      </SelectItem>
+                    ) : isErrorBedTypes ? (
+                      <SelectItem value="error" disabled>
+                        Failed to load bed types
+                      </SelectItem>
+                    ) : bedTypeOptions && bedTypeOptions.length > 0 ? (
+                      bedTypeOptions.map((bedType) => (
+                        <SelectItem key={bedType.value} value={bedType.value}>
+                          {bedType.label}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-bed-types" disabled>
+                        {selectedRoomTypeId
+                          ? "No bed types available"
+                          : "Select a room type first"}
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -429,7 +528,7 @@ export function PromoForm<T extends FieldValues>({
           />
           <FormField
             control={form.control}
-            name={"nights" as FieldPath<T>}
+            name={"total_night" as FieldPath<T>}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Nights</FormLabel>
@@ -451,10 +550,10 @@ export function PromoForm<T extends FieldValues>({
         </div>
 
         {/* Fifth Row: Active Status */}
-        <div className="grid grid-cols-1">
+        {/* <div className="grid grid-cols-1">
           <FormField
             control={form.control}
-            name={"status" as FieldPath<T>}
+            name={"is_active" as FieldPath<T>}
             render={({ field }) => (
               <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                 <div className="space-y-0.5">
@@ -472,7 +571,7 @@ export function PromoForm<T extends FieldValues>({
               </FormItem>
             )}
           />
-        </div>
+        </div> */}
         {children}
       </form>
     </Form>

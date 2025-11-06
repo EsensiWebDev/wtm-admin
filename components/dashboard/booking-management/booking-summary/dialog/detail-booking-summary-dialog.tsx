@@ -15,6 +15,7 @@ import { updateBookingStatus } from "@/app/(dashboard)/booking-management/bookin
 import {
   BookingStatus,
   BookingSummary,
+  BookingSummaryDetail,
   PaymentStatus,
 } from "@/app/(dashboard)/booking-management/booking-summary/types";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
@@ -35,7 +36,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   Select,
   SelectContent,
@@ -43,6 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { DataTableRowAction } from "@/types/data-table";
 import {
   IconApi,
@@ -57,16 +58,8 @@ import ViewInvoiceDialog from "./view-invoice-dialog";
 
 interface GetDetailBookingTableColumnsProps {
   setRowAction: React.Dispatch<
-    React.SetStateAction<DataTableRowAction<DetailBookingSummary> | null>
+    React.SetStateAction<DataTableRowAction<BookingSummaryDetail> | null>
   >;
-}
-
-// Extended type for detail view with additional fields
-interface DetailBookingSummary extends BookingSummary {
-  hotel_name: string;
-  sub_booking_id: string;
-  notes?: string;
-  api_status: boolean;
 }
 
 interface DetailBookingSummaryDialogProps
@@ -74,28 +67,6 @@ interface DetailBookingSummaryDialogProps
   bookingSummary: BookingSummary | null;
   onSuccess?: () => void;
 }
-
-// Mock data for demonstration - replace with actual API call
-const generateMockDetailData = (
-  summary: BookingSummary
-): DetailBookingSummary[] => {
-  return [
-    {
-      ...summary,
-      hotel_name: "Grand Hotel Plaza",
-      sub_booking_id: `SUB-${summary.booking_id}-001`,
-      notes: "Guest requested late check-in. Room upgrade available.",
-      api_status: true,
-    },
-    {
-      ...summary,
-      hotel_name: "Grand Hotel Plaza",
-      sub_booking_id: `SUB-${summary.booking_id}-002`,
-      notes: "Special dietary requirements noted.",
-      api_status: false,
-    },
-  ];
-};
 
 // Notes Dialog Component
 interface NotesDialogProps {
@@ -129,10 +100,9 @@ function NotesDialog({
   );
 }
 
-// Column definitions for the booking details table
 const getDetailBookingColumns = ({
   setRowAction,
-}: GetDetailBookingTableColumnsProps): ColumnDef<DetailBookingSummary>[] => [
+}: GetDetailBookingTableColumnsProps): ColumnDef<BookingSummaryDetail>[] => [
   {
     id: "no",
     header: "No",
@@ -187,23 +157,30 @@ const getDetailBookingColumns = ({
       const [pendingValue, setPendingValue] = React.useState<string | null>(
         null
       );
+      const [reason, setReason] = React.useState("");
 
       const handleConfirm = async () => {
         if (!pendingValue) return;
         startUpdateTransition(() => {
           (async () => {
             try {
-              const result = await updateBookingStatus(
-                String(row.original.booking_id),
-                pendingValue
-              );
+              const result = await updateBookingStatus({
+                booking_detail_id: String(row.original.sub_booking_id),
+                status_id: pendingValue,
+                reason: reason.trim(),
+              });
               if (result?.success) {
                 setSelectValue(pendingValue as BookingStatus);
                 setPendingValue(null);
                 setDialogOpen(false);
-                toast.success("Booking status updated successfully");
+                setReason("");
+                toast.success(
+                  result.message || "Booking status updated successfully"
+                );
               } else {
-                toast.error("Failed to update booking status");
+                toast.error(
+                  result?.message || "Failed to update booking status"
+                );
               }
             } catch (error) {
               void error;
@@ -216,6 +193,7 @@ const getDetailBookingColumns = ({
       const handleCancel = () => {
         setDialogOpen(false);
         setPendingValue(null);
+        setReason("");
       };
 
       const getStatusColor = (value: string) => {
@@ -228,7 +206,7 @@ const getDetailBookingColumns = ({
       return (
         <>
           <Label
-            htmlFor={`${row.original.booking_id}-booking-status`}
+            htmlFor={`${row.original.sub_booking_id}-booking-status`}
             className="sr-only"
           >
             Booking Status
@@ -245,7 +223,7 @@ const getDetailBookingColumns = ({
               className={`w-38 rounded-full px-3 border-0 shadow-none **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate ${getStatusColor(
                 selectValue
               )}`}
-              id={`${row.original.booking_id}-booking-status`}
+              id={`${row.original.sub_booking_id}-booking-status`}
             >
               <SelectValue placeholder="Change status" />
             </SelectTrigger>
@@ -255,7 +233,7 @@ const getDetailBookingColumns = ({
               <SelectItem value="in review">In Review</SelectItem>
             </SelectContent>
           </Select>
-          <ConfirmationDialog
+          {/* <ConfirmationDialog
             open={dialogOpen}
             onOpenChange={setDialogOpen}
             onConfirm={handleConfirm}
@@ -263,7 +241,46 @@ const getDetailBookingColumns = ({
             isLoading={isUpdatePending}
             title="Change Booking Status"
             description="You're about to update the booking status for this booking."
-          />
+          /> */}
+          <ConfirmationDialog
+            open={dialogOpen}
+            onOpenChange={setDialogOpen}
+            onConfirm={handleConfirm}
+            onCancel={handleCancel}
+            isLoading={isUpdatePending}
+            title="Change Booking Status"
+            description={`You're about to update the booking status for this booking.\nThis change may affect the booking process.`}
+          >
+            <div className="space-y-2 mt-2">
+              {/* Show the new booking status */}
+              {pendingValue && (
+                <div className="mb-2 flex items-center justify-center gap-2">
+                  <span className="font-semibold">New Booking Status</span>
+                  <span
+                    className={`capitalize inline-block rounded-full px-3 py-1 text-sm font-semibold ${getStatusColor(
+                      pendingValue
+                    )}`}
+                  >
+                    {pendingValue}
+                  </span>
+                </div>
+              )}
+              <Label
+                htmlFor="booking-status-reason"
+                className="block text-sm font-medium "
+              >
+                Notes
+              </Label>
+              <Textarea
+                id="booking-status-reason"
+                className="w-full rounded border bg-gray-200 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                rows={3}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="(Optional) Add a note for changing the booking status."
+              />
+            </div>
+          </ConfirmationDialog>
         </>
       );
     },
@@ -312,7 +329,7 @@ const getDetailBookingColumns = ({
       return (
         <>
           <Label
-            htmlFor={`${row.original.booking_id}-payment-status`}
+            htmlFor={`${row.original.sub_booking_id}-payment-status`}
             className="sr-only"
           >
             Payment Status
@@ -329,7 +346,7 @@ const getDetailBookingColumns = ({
               className={`w-32 rounded-full px-3 border-0 shadow-none **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate ${getStatusColor(
                 selectValue
               )}`}
-              id={`${row.original.booking_id}-payment-status`}
+              id={`${row.original.sub_booking_id}-payment-status`}
             >
               <SelectValue placeholder="Change status" />
             </SelectTrigger>
@@ -369,7 +386,9 @@ const getDetailBookingColumns = ({
           <NotesDialog
             open={notesOpen}
             onOpenChange={setNotesOpen}
-            notes={row.original.notes || ""}
+            // TODO: Fetch notes from API and set as default value, for now empty array
+            notes={""}
+            // notes={row.original.notes || ""}
             guestName={row.original.guest_name.toLocaleString()}
           />
         </>
@@ -386,7 +405,7 @@ const getDetailBookingColumns = ({
     ),
     cell: ({ row }) => (
       <div>
-        {row.original.api_status ? (
+        {row.original.is_api ? (
           <IconApi aria-label="API Connected" />
         ) : (
           <IconApiOff aria-label="API Disconnected" />
@@ -486,22 +505,7 @@ export function DetailBookingSummaryDialog({
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
-  // Mock data - in real implementation, this would be fetched from API
-  const mockData = React.useMemo(() => {
-    if (!bookingSummary) return [];
-    return generateMockDetailData(bookingSummary);
-  }, [bookingSummary]);
-
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [isFetching, setIsFetching] = React.useState(false);
-
-  // Simulate loading when dialog opens
-  React.useEffect(() => {
-    if (props.open && bookingSummary) {
-      setIsLoading(true);
-      setTimeout(() => setIsLoading(false), 800);
-    }
-  }, [props.open, bookingSummary]);
+  const mockData = bookingSummary?.detail || [];
 
   const columns = React.useMemo(
     () =>
@@ -533,73 +537,12 @@ export function DetailBookingSummaryDialog({
       <Dialog {...props}>
         <DialogContent className="sm:max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader className="flex-shrink-0">
-            <DialogTitle>
-              Booking Details - {bookingSummary.booking_id}
-            </DialogTitle>
-            <div className="grid grid-cols-2 gap-4 pt-2 text-sm text-muted-foreground">
-              <div>
-                <span className="font-medium">Agent:</span>{" "}
-                {bookingSummary.agent_name}
-              </div>
-              <div>
-                <span className="font-medium">Company:</span>{" "}
-                {bookingSummary.agent_company}
-              </div>
-              <div>
-                <span className="font-medium">Booking ID:</span>{" "}
-                {bookingSummary.booking_id}
-              </div>
-              <div>
-                <span className="font-medium">Promo ID:</span>{" "}
-                {bookingSummary.group_promo}
-              </div>
-              <div>
-                <span className="font-medium">Group Promo:</span>{" "}
-                {bookingSummary.group_promo}
-              </div>
-              <div>
-                <span className="font-medium">Status:</span>{" "}
-                <span
-                  className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
-                    bookingSummary.booking_status === "confirmed"
-                      ? "text-green-600 bg-green-100"
-                      : bookingSummary.booking_status === "rejected"
-                      ? "text-red-600 bg-red-100"
-                      : "text-yellow-600 bg-yellow-100"
-                  }`}
-                >
-                  {bookingSummary.booking_status}
-                </span>
-              </div>
-            </div>
+            <DialogTitle>Booking Management Details</DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-hidden flex flex-col">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-48">
-                <div className="flex items-center gap-2">
-                  <LoadingSpinner className="h-4 w-4" />
-                  <span className="text-sm text-muted-foreground">
-                    Loading booking details...
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="flex-1 overflow-auto relative">
-                  {isFetching && (
-                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50 backdrop-blur-sm">
-                      <div className="flex items-center gap-2 rounded-lg bg-background p-3 shadow-lg border">
-                        <LoadingSpinner className="h-4 w-4" />
-                        <span className="text-sm text-muted-foreground">
-                          Updating data...
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                  <DataTable table={table} />
-                </div>
-              </>
-            )}
+            <div className="flex-1 overflow-auto relative">
+              <DataTable table={table} showPagination={false} />
+            </div>
           </div>
         </DialogContent>
       </Dialog>

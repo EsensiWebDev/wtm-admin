@@ -29,9 +29,9 @@ export function getAgentControlTableColumns({
   companyOptions,
 }: GetAgentControlTableColumnsProps): ColumnDef<AgentControl>[] {
   const getStatusColor = (value: string) => {
-    if (value === "approved") return "text-green-600 bg-green-100";
-    if (value === "rejected") return "text-red-600 bg-red-100";
-    return "";
+    if (value === "Active") return "text-green-600 bg-green-100";
+    else if (value === "Reject") return "text-red-600 bg-red-100";
+    else return "text-gray-600 bg-gray-100";
   };
 
   interface StatusCellProps {
@@ -50,7 +50,7 @@ export function getAgentControlTableColumns({
         (async () => {
           try {
             const result = await updateAgentStatus(
-              row.original.id,
+              String(row.original.id),
               pendingValue
             );
             if (result?.success) {
@@ -62,6 +62,7 @@ export function getAgentControlTableColumns({
               toast.error(result?.message || "Failed to update status");
             }
           } catch (error) {
+            void error;
             toast.error("An error occurred. Please try again.");
           }
         })();
@@ -95,8 +96,8 @@ export function getAgentControlTableColumns({
             <SelectValue placeholder="Assign promo group" />
           </SelectTrigger>
           <SelectContent align="end">
-            <SelectItem value="approved">Approved</SelectItem>
-            <SelectItem value="rejected">Rejected</SelectItem>
+            <SelectItem value="Active">Approved</SelectItem>
+            <SelectItem value="Reject">Rejected</SelectItem>
           </SelectContent>
         </Select>
         <ConfirmationDialog
@@ -122,7 +123,7 @@ export function getAgentControlTableColumns({
       size: 40,
     },
     {
-      id: "agent_name",
+      id: "search",
       accessorKey: "name",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Agent Name" />
@@ -143,14 +144,14 @@ export function getAgentControlTableColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Agent Company" />
       ),
-      cell: ({ row }) => row.original.company,
+      cell: ({ row }) => row.original.agent_company_name,
       meta: {
         label: "Company",
         placeholder: "Search agent company...",
         variant: "multiSelect",
         options: companyOptions,
       },
-      enableColumnFilter: true,
+      enableColumnFilter: false,
     },
     {
       id: "Email",

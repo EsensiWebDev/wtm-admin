@@ -1,6 +1,5 @@
 "use client";
 
-import { editPromoGroupPromos } from "@/app/(dashboard)/promo-group/actions";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
@@ -9,10 +8,11 @@ import { useDataTable } from "@/hooks/use-data-table";
 import { formatDate } from "@/lib/format";
 import { ColumnDef } from "@tanstack/react-table";
 import { Search, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import AddPromoDialog from "./dialog/add-promo-dialog";
 import { PromoGroupPromos } from "@/app/(dashboard)/promo-group/types";
+import { removePromoGroupPromos } from "@/app/(dashboard)/promo-group/actions";
 
 interface PromoDetailsCardProps {
   promos: PromoGroupPromos[];
@@ -25,13 +25,12 @@ const PromoDetailsCard = ({
   promoGroupId,
   pageCount,
 }: PromoDetailsCardProps) => {
-  const [localPromos, setLocalPromos] = useState<PromoGroupPromos[]>(promos);
-  const [isPending, startTransition] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [promoToDelete, setPromoToDelete] = useState<PromoGroupPromos | null>(
     null
   );
-  const [isDeleting, setIsDeleting] = useState(false);
   const columns = useMemo<ColumnDef<PromoGroupPromos>[]>(
     () => [
       {
@@ -102,38 +101,13 @@ const PromoDetailsCard = ({
   );
 
   const { table } = useDataTable({
-    data: localPromos || [],
+    data: promos || [],
     columns,
     pageCount,
     getRowId: (originalRow) => String(originalRow.promo_id),
     shallow: false,
     clearOnDefault: true,
   });
-
-  const handleAddPromo = async (promo: PromoGroupPromos) => {
-    const newPromos = [...localPromos, promo];
-    setLocalPromos(newPromos);
-
-    // Update on server
-    startTransition(true);
-    try {
-      const result = await editPromoGroupPromos(promoGroupId, newPromos);
-      if (result.success) {
-        toast.success("Promo added to group successfully");
-      } else {
-        toast.error("Failed to add promo to group");
-        // Revert the local state
-        setLocalPromos(localPromos);
-      }
-    } catch (error) {
-      console.error("Error adding promo:", error);
-      toast.error("Failed to add promo to group");
-      // Revert the local state
-      setLocalPromos(localPromos);
-    } finally {
-      startTransition(false);
-    }
-  };
 
   const handleDeleteClick = (promo: PromoGroupPromos) => {
     setPromoToDelete(promo);
@@ -143,34 +117,21 @@ const PromoDetailsCard = ({
   const handleDeleteConfirm = async () => {
     if (!promoToDelete) return;
 
-    setIsDeleting(true);
-    const updatedPromos = localPromos.filter(
-      (p) => p.promo_id !== promoToDelete.promo_id
-    );
-    const previousPromos = [...localPromos];
+    startTransition(async () => {
+      toast.promise(
+        removePromoGroupPromos({
+          promo_group_id: Number(promoGroupId),
+          promo_id: Number(promoToDelete.promo_id),
+        }),
+        {
+          loading: "Removing promo...",
+          success: (data) => data.message,
+          error: "Failed to remove promo",
+        }
+      );
 
-    // Optimistically update local state
-    setLocalPromos(updatedPromos);
-
-    try {
-      const result = await editPromoGroupPromos(promoGroupId, updatedPromos);
-      if (result.success) {
-        toast.success("Promo removed from group successfully");
-      } else {
-        toast.error("Failed to remove promo from group");
-        // Revert the local state
-        setLocalPromos(previousPromos);
-      }
-    } catch (error) {
-      console.error("Error removing promo:", error);
-      toast.error("Failed to remove promo from group");
-      // Revert the local state
-      setLocalPromos(previousPromos);
-    } finally {
-      setIsDeleting(false);
       setDeleteDialogOpen(false);
-      setPromoToDelete(null);
-    }
+    });
   };
 
   const handleDeleteCancel = () => {
@@ -188,10 +149,7 @@ const PromoDetailsCard = ({
         <div className="relative">
           <DataTable table={table}>
             <DataTableToolbar table={table}>
-              <AddPromoDialog
-                onAdd={handleAddPromo}
-                currentPromos={localPromos}
-              />
+              <AddPromoDialog promoGroupId={promoGroupId} />
             </DataTableToolbar>
           </DataTable>
         </div>
@@ -202,7 +160,7 @@ const PromoDetailsCard = ({
         onOpenChange={setDeleteDialogOpen}
         onConfirm={handleDeleteConfirm}
         onCancel={handleDeleteCancel}
-        isLoading={isDeleting}
+        isLoading={isPending}
         title="Are you sure you want to remove this promo?"
         description={`Are you sure you want to remove "${promoToDelete?.promo_name}" from this promo group? This action cannot be undone.`}
       />

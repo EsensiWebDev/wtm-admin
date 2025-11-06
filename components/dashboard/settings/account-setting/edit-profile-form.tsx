@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -21,10 +22,9 @@ import z from "zod";
 
 const profileSchema = z.object({
   username: z.string().min(1, "Username is required"),
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  agentCompany: z.string().min(1, "Agent company is required"),
-  phoneNumber: z
+  full_name: z.string().min(1, "Full name is required"),
+  email: z.string().email().min(1, "Email is required"),
+  phone: z
     .string()
     .min(1, "Phone number is required")
     .regex(
@@ -33,7 +33,7 @@ const profileSchema = z.object({
     ),
 });
 
-type ProfileSchema = z.infer<typeof profileSchema>;
+export type ProfileSchema = z.infer<typeof profileSchema>;
 
 interface EditProfileFormProps {
   defaultValues: AccountProfile;
@@ -41,15 +41,15 @@ interface EditProfileFormProps {
 
 const EditProfileForm = ({ defaultValues }: EditProfileFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
 
   const form = useForm<ProfileSchema>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       username: defaultValues.username,
-      firstName: defaultValues.firstName,
-      lastName: defaultValues.lastName,
-      agentCompany: defaultValues.agentCompany,
-      phoneNumber: defaultValues.phoneNumber,
+      full_name: defaultValues.full_name,
+      email: defaultValues.email,
+      phone: defaultValues.phone,
     },
   });
 
@@ -59,6 +59,9 @@ const EditProfileForm = ({ defaultValues }: EditProfileFormProps) => {
       loading: "Saving profile changes...",
       success: (data) => {
         setIsLoading(false);
+        queryClient.invalidateQueries({
+          queryKey: ["profile"],
+        });
         return data.message || "Profile updated successfully";
       },
       error: (error) => {
@@ -92,11 +95,11 @@ const EditProfileForm = ({ defaultValues }: EditProfileFormProps) => {
               />
               <FormField
                 control={form.control}
-                name="firstName"
+                name="full_name"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="col-span-2">
                     <FormLabel className="text-sm font-medium">
-                      First Name
+                      Full Name
                     </FormLabel>
                     <FormControl>
                       <Input placeholder="Enter first name" {...field} />
@@ -107,29 +110,12 @@ const EditProfileForm = ({ defaultValues }: EditProfileFormProps) => {
               />
               <FormField
                 control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium">
-                      Last Name
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter last name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="agentCompany"
+                name="email"
                 render={({ field }) => (
                   <FormItem className="col-span-2">
-                    <FormLabel className="text-sm font-medium">
-                      Agent Company
-                    </FormLabel>
+                    <FormLabel className="text-sm font-medium">Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter agent company" {...field} />
+                      <Input placeholder="Enter email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -137,7 +123,7 @@ const EditProfileForm = ({ defaultValues }: EditProfileFormProps) => {
               />
               <FormField
                 control={form.control}
-                name="phoneNumber"
+                name="phone"
                 render={({ field }) => (
                   <FormItem className="col-span-2">
                     <FormLabel className="text-sm font-medium">

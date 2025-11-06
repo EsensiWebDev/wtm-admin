@@ -103,7 +103,15 @@ export async function bffFetch(
   } else {
     normalizedHeaders.delete("Cookie");
   }
-  normalizedHeaders.set("Content-Type", "application/json");
+
+  // Only set Content-Type to application/json if it's not already set
+  // This allows FormData to work properly as the browser will set the correct Content-Type with boundary
+  if (
+    !normalizedHeaders.has("Content-Type") &&
+    !(init?.body instanceof FormData)
+  ) {
+    normalizedHeaders.set("Content-Type", "application/json");
+  }
 
   let response = await fetch(url, {
     ...init,
@@ -111,10 +119,8 @@ export async function bffFetch(
     cache: "no-store",
   });
 
-  if (response.status === 500) {
+  if (response.status === 500 || response.status === 401) {
     const refreshResult = await attemptTokenRefresh(session);
-
-    console.log({ refreshResult });
 
     if (refreshResult.kind === "success" && session.accessToken) {
       normalizedHeaders.set("Authorization", `Bearer ${session.accessToken}`);

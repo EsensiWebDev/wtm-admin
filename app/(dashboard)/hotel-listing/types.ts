@@ -1,11 +1,9 @@
 import { SearchParams } from "@/types";
 
 export interface Room {
-  id: string;
   name: string;
-  description: string;
-  normal_price: number;
-  discount_price: number;
+  price: number;
+  price_with_breakfast: number;
 }
 
 export interface Hotel {

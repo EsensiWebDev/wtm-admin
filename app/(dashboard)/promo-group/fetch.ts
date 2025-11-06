@@ -1,8 +1,9 @@
-import { ApiResponse, SearchParams } from "@/types";
-import { Option } from "@/types/data-table";
-import { PromoGroup, PromoGroupMembers, PromoGroupPromos } from "./types";
-import { buildQueryParams } from "@/lib/utils";
+"use server";
+
 import { apiCall } from "@/lib/api";
+import { buildQueryParams } from "@/lib/utils";
+import { ApiResponse, SearchParams } from "@/types";
+import { PromoGroup, PromoGroupMembers, PromoGroupPromos } from "./types";
 
 export const getPromoGroups = async ({
   searchParams,
@@ -16,62 +17,67 @@ export const getPromoGroups = async ({
   return apiResponse;
 };
 
+export const getPromoGroupsById = async (
+  id: string
+): Promise<ApiResponse<{ id: number; name: string }>> => {
+  const url = `/promo-groups/${id}`;
+  const apiResponse = await apiCall<{ id: number; name: string }>(url);
+
+  return apiResponse;
+};
+
 // Retrieve a paginated list of promos that belong to a specific promo group using query parameters.
 export const getPromoGroupPromosById = async (
   id: string,
   searchParams: SearchParams
 ): Promise<ApiResponse<PromoGroupPromos[]>> => {
   const queryString = buildQueryParams(searchParams);
-  const url = `/promo-groups/${id}${queryString ? `?${queryString}` : ""}`;
+  const url = `/promo-groups/promos?id=${id}${
+    queryString ? `&${queryString}` : ""
+  }`;
   const apiResponse = await apiCall<PromoGroupPromos[]>(url);
 
   return apiResponse;
 };
 
-export const getCompanyOptions = async () => {
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+export const getAgentByCompanyId = async (id: string) => {
+  const url = `/users/by-agent-company/${id}`;
+  const apiResponse = await apiCall<{ id: number; name: string }[]>(url);
 
-  const data = [
-    {
-      label: "Esensi Digital",
-      value: "1",
-    },
-    {
-      label: "Vevo",
-      value: "2",
-    },
-    {
-      label: "88 Rising",
-      value: "3",
-    },
-  ] as Option[];
+  if (apiResponse.status === 200 && Array.isArray(apiResponse.data)) {
+    return apiResponse.data.map((agent) => ({
+      label: agent.name,
+      value: agent.id.toString(),
+    }));
+  }
 
-  return data;
+  return [];
 };
 
 // Return Member[] optionally filtered by company label
 export const getPromoGroupMembersById = async (
-  id: string,
   searchParams: SearchParams
 ): Promise<ApiResponse<PromoGroupMembers[]>> => {
   const queryString = buildQueryParams(searchParams);
-  const url = `/promo-groups/members/${id}${
-    queryString ? `?${queryString}` : ""
-  }`;
+  const url = `/promo-groups/members${queryString ? `?${queryString}` : ""}`;
   const apiResponse = await apiCall<PromoGroupMembers[]>(url);
 
   return apiResponse;
 };
 
-// Search promos with query (for AsyncSelect)
-export const searchPromos = async (
-  query?: string
-): Promise<ApiResponse<PromoGroupPromos[]>> => {
-  const queryString = buildQueryParams({
-    search: query,
-  });
-  const url = `/promos${queryString ? `?${queryString}` : ""}`;
-  const apiResponse = await apiCall<PromoGroupPromos[]>(url);
+export const getUnassignedPromos = async (
+  promo_group_id: string,
+  searchKey: string
+) => {
+  const url = `/promo-groups/unassigned-promos?promo_group_id=${promo_group_id}`;
+  const apiResponse = await apiCall<{ id: number; name: string }[]>(url);
 
-  return apiResponse;
+  if (apiResponse.status === 200 && Array.isArray(apiResponse.data)) {
+    return apiResponse.data.map((promo) => ({
+      label: promo.name,
+      value: promo.id.toString(),
+    }));
+  }
+
+  return [];
 };

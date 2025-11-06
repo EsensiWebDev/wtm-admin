@@ -10,6 +10,7 @@ import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { useDataTable } from "@/hooks/use-data-table";
+import { formatCurrency } from "@/lib/format";
 import type { DataTableRowAction } from "@/types/data-table";
 import { Plus } from "lucide-react";
 import Link from "next/link";
@@ -66,22 +67,38 @@ const HotelTable = ({ promises }: HotelTableProps) => {
               <TableCell className="px-5">
                 <div className="space-y-2">
                   {hotel.rooms.map((room) => (
-                    <div key={room.id} className="mt-1">
-                      <div className="flex justify-between">
-                        <h3>{room.name}</h3>
-                        <p className="text-muted-foreground text-xs">
-                          Rp. {room.normal_price}
-                        </p>
-                      </div>
-                      <div className="flex justify-between">
-                        <p className="text-muted-foreground text-xs">
-                          {room.description}
-                        </p>
-                        <h3 className="font-medium">
-                          Rp. {room.discount_price}
-                        </h3>
-                      </div>
-                    </div>
+                    <React.Fragment key={room.name}>
+                      {room.price && (
+                        <div className="mt-1">
+                          <div className="flex justify-between">
+                            <h3>{room.name}</h3>
+                          </div>
+                          <div className="flex justify-between">
+                            <p className="text-muted-foreground text-xs">
+                              with breakfast
+                            </p>
+                            <h3 className="font-medium">
+                              {formatCurrency(room.price_with_breakfast)}
+                            </h3>
+                          </div>
+                        </div>
+                      )}
+                      {room.price_with_breakfast && (
+                        <div className="mt-1">
+                          <div className="flex justify-between">
+                            <h3>{room.name}</h3>
+                          </div>
+                          <div className="flex justify-between">
+                            <p className="text-muted-foreground text-xs">
+                              without breakfast
+                            </p>
+                            <h3 className="font-medium">
+                              {formatCurrency(room.price)}
+                            </h3>
+                          </div>
+                        </div>
+                      )}
+                    </React.Fragment>
                   ))}
                 </div>
               </TableCell>

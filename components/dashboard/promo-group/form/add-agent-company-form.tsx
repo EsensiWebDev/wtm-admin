@@ -1,6 +1,5 @@
 "use client";
 
-import { PromoGroupMembers } from "@/app/(dashboard)/promo-group/types";
 import {
   Form,
   FormControl,
@@ -26,7 +25,6 @@ interface AddAgentCompanyFormProps<T extends FieldValues>
   form: UseFormReturn<T>;
   onSubmit: (data: T) => void;
   companyOptions: Option[];
-  members: PromoGroupMembers[];
 }
 
 export function AddAgentCompanyForm<T extends FieldValues>({
@@ -34,7 +32,6 @@ export function AddAgentCompanyForm<T extends FieldValues>({
   onSubmit,
   children,
   companyOptions,
-  members,
 }: AddAgentCompanyFormProps<T>) {
   return (
     <Form {...form}>
@@ -44,13 +41,8 @@ export function AddAgentCompanyForm<T extends FieldValues>({
       >
         <FormField
           control={form.control}
-          name={"company" as FieldPath<T>}
+          name={"agent_company_id" as FieldPath<T>}
           render={({ field }) => {
-            const selectedCompany = field.value;
-            const companyMembers = selectedCompany
-              ? members.filter((m) => m.agent_company === selectedCompany)
-              : [];
-
             return (
               <FormItem>
                 <FormLabel>Agent Company</FormLabel>
@@ -64,7 +56,7 @@ export function AddAgentCompanyForm<T extends FieldValues>({
                     </SelectTrigger>
                     <SelectContent>
                       {companyOptions.map((opt) => (
-                        <SelectItem key={opt.label} value={opt.label}>
+                        <SelectItem key={opt.label} value={opt.value}>
                           {opt.label}
                         </SelectItem>
                       ))}
@@ -74,7 +66,7 @@ export function AddAgentCompanyForm<T extends FieldValues>({
                 <FormMessage />
 
                 {/* Preview selected company members */}
-                {selectedCompany && (
+                {/* {selectedCompany && (
                   <div className="mt-2">
                     <h4 className="text-sm font-medium mb-2 text-muted-foreground">
                       Members from {selectedCompany}:
@@ -96,7 +88,7 @@ export function AddAgentCompanyForm<T extends FieldValues>({
                       </p>
                     )}
                   </div>
-                )}
+                )} */}
               </FormItem>
             );
           }}

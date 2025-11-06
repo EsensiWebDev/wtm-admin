@@ -2,20 +2,65 @@
 
 import { CreateBookingSummarySchema } from "@/components/dashboard/booking-management/booking-summary/dialog/create-booking-summary-dialog";
 import { EditBookingSummarySchema } from "@/components/dashboard/booking-management/booking-summary/dialog/edit-booking-summary-dialog";
+import { apiCall } from "@/lib/api";
+import { cleanBody } from "@/lib/utils";
+import { revalidatePath } from "next/cache";
 
-export async function updateBookingStatus(
-  bookingId: string,
-  status: string,
-  reason?: string
-) {
-  console.log("Update Booking Status");
-  // Simulate API call delay
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+export async function updateBookingStatus(input: {
+  booking_id?: string;
+  booking_detail_id?: string;
+  status_id: string;
+  reason?: string;
+}) {
+  try {
+    const body = {
+      ...input,
+      booking_id: input.booking_id ? Number(input.booking_id) : undefined,
+      booking_detail_id: input.booking_detail_id
+        ? Number(input.booking_detail_id)
+        : undefined,
+      status_id: Number(input.status_id),
+    };
 
-  console.table({ bookingId, status, reason });
+    const response = await apiCall(`bookings/status`, {
+      method: "POST",
+      body: JSON.stringify(cleanBody(body)),
+    });
 
-  // Simulate success response
-  return { success: true, message: `Booking status updated to ${status}` };
+    console.log({ response });
+
+    if (response.status !== 200) {
+      return {
+        success: false,
+        message: response.message || "Failed to update booking status",
+      };
+    }
+
+    revalidatePath("/booking-management/booking-summary", "layout");
+
+    return {
+      success: true,
+      message: response.message || "Booking status updated successfully",
+    };
+  } catch (error) {
+    console.error("Error editing promo:", error);
+
+    // Handle API error responses with specific messages
+    if (error && typeof error === "object" && "message" in error) {
+      return {
+        success: false,
+        message: error.message as string,
+      };
+    }
+
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to update booking status",
+    };
+  }
 }
 
 export async function updatePaymentStatus(

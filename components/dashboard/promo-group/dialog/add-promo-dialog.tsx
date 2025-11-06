@@ -1,9 +1,16 @@
 "use client";
 
-import { searchPromos } from "@/app/(dashboard)/promo-group/fetch";
-import { PromoGroupPromos } from "@/app/(dashboard)/promo-group/types";
-import { AsyncSelect } from "@/components/async-select";
+import { addPromoGroupPromos } from "@/app/(dashboard)/promo-group/actions";
+import { getUnassignedPromos } from "@/app/(dashboard)/promo-group/fetch";
 import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
   Dialog,
   DialogClose,
@@ -19,82 +26,71 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { formatDate } from "@/lib/format";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader, PlusCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Check, ChevronsUpDown, Loader, PlusCircle } from "lucide-react";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
 
 export const addPromoSchema = z.object({
-  promoId: z.string().min(1, "Promo is required"),
+  promo_id: z.string().min(1, "Promo is required"),
 });
 
 export type AddPromoSchemaType = z.infer<typeof addPromoSchema>;
 
 interface AddPromoDialogProps {
-  onAdd: (promo: PromoGroupPromos) => void;
-  currentPromos: PromoGroupPromos[];
+  promoGroupId: string;
 }
 
-const AddPromoDialog = ({ onAdd, currentPromos }: AddPromoDialogProps) => {
+const AddPromoDialog = ({ promoGroupId }: AddPromoDialogProps) => {
   const [open, setOpen] = React.useState(false);
+  const [openPopover, setOpenPopover] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
 
   const form = useForm<AddPromoSchemaType>({
     resolver: zodResolver(addPromoSchema),
     defaultValues: {
-      promoId: "",
+      promo_id: "",
     },
   });
 
-  // Filter out promos that are already in the current group
-  const currentPromoIds = React.useMemo(
-    () => new Set((currentPromos || []).map((p) => p.promo_id)),
-    [currentPromos]
-  );
-
-  // Create async fetcher that filters out current promos
-  const promoFetcher = React.useCallback(
-    async (query?: string): Promise<PromoGroupPromos[]> => {
-      const allPromos = await searchPromos(query);
-      return allPromos.data.filter(
-        (promo) => !currentPromoIds.has(promo.promo_id)
-      );
+  const {
+    data: promoOptions,
+    isLoading: isLoadingPromoOptions,
+    // isError: isErrorPromoOptions,
+  } = useQuery({
+    queryKey: ["promo-options", promoGroupId, ""],
+    queryFn: async () => {
+      if (!promoGroupId) return [];
+      return getUnassignedPromos(promoGroupId, "");
     },
-    [currentPromoIds]
-  );
-
-  // Additional filter function for client-side filtering
-  const filterFn = React.useCallback(
-    (promo: PromoGroupPromos, query: string) => {
-      const searchQuery = query.toLowerCase();
-      return (
-        promo.promo_name.toLowerCase().includes(searchQuery) ||
-        promo.promo_code.toLowerCase().includes(searchQuery)
-      );
-    },
-    []
-  );
+    enabled: !!promoGroupId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: 2,
+  });
 
   async function onSubmit(input: AddPromoSchemaType) {
     startTransition(async () => {
-      // Fetch the selected promo from the server to ensure we have the latest data
-      const allPromos = await searchPromos();
-      const selectedPromo = allPromos.data.find(
-        (p) => String(p.promo_id) === input.promoId
-      );
+      const { success } = await addPromoGroupPromos({
+        ...input,
+        promo_group_id: promoGroupId,
+      });
 
-      if (!selectedPromo) {
-        toast.error("Promo data unavailable");
+      if (!success) {
+        toast.error("Failed to add promo");
         return;
       }
-
-      onAdd(selectedPromo);
       form.reset();
       setOpen(false);
       toast.success("Promo added to group");
@@ -123,56 +119,74 @@ const AddPromoDialog = ({ onAdd, currentPromos }: AddPromoDialogProps) => {
           >
             <FormField
               control={form.control}
-              name="promoId"
+              name="promo_id"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Select Promo</FormLabel>
-                  <FormControl>
-                    <AsyncSelect<PromoGroupPromos>
-                      triggerClassName="py-6"
-                      fetcher={promoFetcher}
-                      preload={false}
-                      filterFn={filterFn}
-                      renderOption={(promo) => (
-                        <div className="flex flex-col items-start">
-                          <div className="font-medium">{promo.promo_name}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {promo.promo_code} •{" "}
-                            {formatDate(new Date(promo.promo_start_date))} -{" "}
-                            {formatDate(new Date(promo.promo_end_date))}
+                <FormItem className="flex flex-col">
+                  <Popover open={openPopover} onOpenChange={setOpenPopover}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        {isLoadingPromoOptions ? (
+                          <div className="flex items-center">
+                            <LoadingSpinner className="mr-2 h-4 w-4" />
+                            Loading promo...
                           </div>
-                        </div>
-                      )}
-                      getOptionValue={(promo) => String(promo.promo_id)}
-                      getDisplayValue={(promo) => (
-                        <div className="flex flex-col items-start">
-                          <div className="font-medium">{promo.promo_name}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {promo.promo_code} •{" "}
-                            {formatDate(new Date(promo.promo_start_date))} -{" "}
-                            {formatDate(new Date(promo.promo_end_date))}
-                          </div>
-                        </div>
-                      )}
-                      value={field.value}
-                      onChange={field.onChange}
-                      label="Promo"
-                      placeholder="Select a promo..."
-                      width="100%"
-                      noResultsMessage="All available promos have been added to this group."
-                      notFound={
-                        <div className="p-4 text-center text-sm text-muted-foreground">
-                          All available promos have been added to this group.
-                        </div>
-                      }
-                      clearable={false}
-                    />
-                  </FormControl>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn(
+                              "w-full justify-between",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value
+                              ? promoOptions?.find(
+                                  (option) => option.value === field.value
+                                )?.label
+                              : "Select promo"}
+                            <ChevronsUpDown className="opacity-50" />
+                          </Button>
+                        )}
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)] max-w-[var(--radix-popover-content-available-width)]">
+                      <Command>
+                        <CommandInput
+                          placeholder="Search promo..."
+                          className="h-9"
+                        />
+                        <CommandList>
+                          <CommandEmpty>No promo found.</CommandEmpty>
+                          <CommandGroup>
+                            {promoOptions?.map((option) => (
+                              <CommandItem
+                                value={option.label}
+                                key={option.value}
+                                onSelect={() => {
+                                  form.setValue("promo_id", option.value);
+                                  setOpenPopover(false);
+                                }}
+                              >
+                                {option.label}
+                                <Check
+                                  className={cn(
+                                    "ml-auto",
+                                    option.value === field.value
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
             <DialogFooter className="gap-2 pt-2 sm:space-x-0">
               <DialogClose asChild>
                 <Button type="button" variant="outline" className="bg-white">

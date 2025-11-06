@@ -1,13 +1,13 @@
 "use server";
 
-import { CreateAgentSchema } from "@/components/dashboard/account/agent-overview/agent-management/dialog/create-agent-dialog";
 import { EditAgentSchema } from "@/components/dashboard/account/agent-overview/agent-management/dialog/edit-agent-dialog";
+import { apiCall } from "@/lib/api";
 import { ExportConfigs } from "@/lib/export-client";
 import { ExportService } from "@/lib/export-service";
 import { ExportColumn, ExportFormat, ExportResult } from "@/lib/export-types";
-import { apiCall } from "@/lib/api";
 import { SearchParams } from "@/types";
 import { revalidatePath } from "next/cache";
+import { getAgentData } from "./fetch";
 import { Agent } from "./types";
 import { getAgentData } from "./fetch";
 
@@ -29,24 +29,16 @@ export async function deleteAgent(agentId: string) {
   return { success: true, message: `Agent deleted` };
 }
 
-export async function createAgent(input: CreateAgentSchema) {
+export async function createAgent(formData: FormData) {
   try {
-    const body = {
-      ...input,
-      role: "agent",
-      promo_group_id: Number(input.promo_group_id),
-    };
-
-    console.log({ body });
-
-    return {
-      success: false,
-      message: "Failed to create agent",
-    };
+    // return {
+    //   success: false,
+    //   message: "Failed to create agent",
+    // };
 
     const response = await apiCall("users", {
       method: "POST",
-      body: JSON.stringify(body),
+      body: formData,
     });
 
     console.log({ response, message: response.message });
@@ -167,7 +159,7 @@ const exportColumns: ExportColumn<Agent>[] = [
   {
     key: "kakao_id",
     header: "Kakao ID",
-    accessor: (item) => item.kakao_id,
+    accessor: (item) => item.kakao_talk_id,
     width: 15,
   },
   {
@@ -190,16 +182,13 @@ export async function exportAgent(
   format: ExportFormat = "csv"
 ): Promise<ExportResult> {
   try {
-    // Override limit to 9999 to get all data for export
     const exportSearchParams = {
       ...searchParams,
-      limit: "9999",
+      limit: "0",
     };
 
-    // Log export attempt for debugging
     console.log("Export request:", { searchParams, format });
 
-    // Get data (in real implementation, this would fetch from database)
     const { data, status, message } = await getAgentData({
       searchParams: exportSearchParams,
     });
@@ -209,7 +198,6 @@ export async function exportAgent(
       // return { success: false, message: message || "Failed to export data" };
     }
 
-    // Use the reusable export service
     return await ExportService.exportData(
       data,
       exportColumns,

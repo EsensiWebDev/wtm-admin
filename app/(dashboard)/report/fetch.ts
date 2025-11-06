@@ -1,8 +1,9 @@
+import { apiCall } from "@/lib/api";
+import { buildQueryParams } from "@/lib/utils";
+import { ApiResponse } from "@/types";
+import { format } from "date-fns";
 import { SearchParams } from "nuqs";
 import { ReportAgent, ReportAgentDetail, ReportSummary } from "./types";
-import { ApiResponse } from "@/types";
-import { buildQueryParams } from "@/lib/utils";
-import { apiCall } from "@/lib/api";
 
 export const getReportSummary = async ({
   searchParams,
@@ -21,6 +22,31 @@ export const getReportAgent = async ({
 }: {
   searchParams: SearchParams;
 }): Promise<ApiResponse<ReportAgent[]>> => {
+  // Extract and parse date range
+  // Ensure period_date exists and is a string
+  const periodDate = searchParams.period_date;
+  let query = searchParams;
+
+  if (periodDate && !Array.isArray(periodDate)) {
+    const [dateFrom, dateTo] = periodDate.split(",");
+
+    // Convert timestamps to formatted dates and prepare final query params
+    const formattedQuery = {
+      ...searchParams,
+      date_from: format(new Date(parseInt(dateFrom)), "yyyy-MM-dd"),
+      date_to: format(new Date(parseInt(dateTo)), "yyyy-MM-dd"),
+    } as SearchParams;
+
+    // Remove the original period_date parameter
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { period_date, ...rest } = formattedQuery;
+    query = rest;
+  } else {
+    // If no period_date, remove it from query if it exists
+    const { period_date, ...rest } = searchParams;
+    query = rest as SearchParams;
+  }
+
   // return {
   //   data: [
   //     {
@@ -41,7 +67,7 @@ export const getReportAgent = async ({
   //   status: 200,
   // };
 
-  const queryString = buildQueryParams(searchParams);
+  const queryString = buildQueryParams(query);
   const url = `/reports/agent${queryString ? `?${queryString}` : ""}`;
   const apiResponse = await apiCall<ReportAgent[]>(url);
 
@@ -83,25 +109,3 @@ export const getReportAgentDetail = async (): Promise<
 
   return apiResponse;
 };
-
-export async function getCompanyOptions() {
-  // Simulate API call
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  return [
-    { label: "Esensi Digital", value: "esensi digital" },
-    { label: "WTM Digital", value: "wtm digital" },
-    { label: "Other Company", value: "other company" },
-  ];
-}
-
-export async function getHotelOptions() {
-  // Simulate API call
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  return [
-    { label: "Grand Hotel Jakarta", value: "Grand Hotel Jakarta" },
-    { label: "Hotel Indonesia", value: "hotel Indonesia" },
-    { label: "Other Hotel", value: "other hotel" },
-  ];
-}

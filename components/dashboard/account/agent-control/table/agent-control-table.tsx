@@ -1,13 +1,11 @@
 "use client";
 
-import {
-  getCompanyOptions,
-  getData,
-} from "@/app/(dashboard)/account/agent-overview/agent-control/fetch";
+import { getData } from "@/app/(dashboard)/account/agent-overview/agent-control/fetch";
 import { AgentControl } from "@/app/(dashboard)/account/agent-overview/agent-control/types";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { useDataTable } from "@/hooks/use-data-table";
+import { getCompanyOptions } from "@/server/general";
 import type { DataTableRowAction } from "@/types/data-table";
 import React, { useTransition } from "react";
 import { DeleteAgentControlDialog } from "../dialog/delete-agent-control-dialog";
@@ -26,7 +24,7 @@ interface AgentControlTableProps {
 
 const AgentControlTable = ({ promises }: AgentControlTableProps) => {
   const [isPending, startTransition] = useTransition();
-  const [{ data, pageCount }, companyOptions] = React.use(promises);
+  const [{ data, pagination }, companyOptions] = React.use(promises);
   const [rowAction, setRowAction] =
     React.useState<DataTableRowAction<AgentControl> | null>(null);
 
@@ -42,8 +40,8 @@ const AgentControlTable = ({ promises }: AgentControlTableProps) => {
   const { table } = useDataTable({
     data: data || [],
     columns,
-    pageCount,
-    getRowId: (originalRow) => originalRow.id,
+    pageCount: pagination?.total_pages || 1,
+    getRowId: (originalRow) => String(originalRow.id),
     shallow: false,
     clearOnDefault: true,
     startTransition,
@@ -61,7 +59,7 @@ const AgentControlTable = ({ promises }: AgentControlTableProps) => {
       <DetailAgentControlDialog
         open={rowAction?.variant === "detail"}
         onOpenChange={() => setRowAction(null)}
-        agentControl={rowAction?.row.original ? [rowAction.row.original] : []}
+        agentControl={rowAction?.row.original ? rowAction.row.original : null}
         onSuccess={() => rowAction?.row.toggleSelected(false)}
       />
       {rowAction?.variant === "update" && (

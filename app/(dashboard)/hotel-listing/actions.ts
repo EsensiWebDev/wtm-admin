@@ -227,11 +227,11 @@ export async function importHotelsFromCsv(file: File) {
       // Add room if room data is provided
       if (rowData.room_name && rowData.room_description) {
         const room: Partial<Room> = {
-          id: `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          // id: `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           name: rowData.room_name,
-          description: rowData.room_description,
-          normal_price: parseFloat(rowData.normal_price) || 0,
-          discount_price: parseFloat(rowData.discount_price) || 0,
+          // description: rowData.room_description,
+          price: parseFloat(rowData.normal_price) || 0,
+          price_with_breakfast: parseFloat(rowData.discount_price) || 0,
         };
 
         if (!hotel.rooms) hotel.rooms = [];

@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -21,16 +22,16 @@ import z from "zod";
 
 const passwordChangeSchema = z
   .object({
-    currentPassword: z.string().min(1, "Current password is required"),
-    newPassword: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string().min(1, "Please confirm your password"),
+    old_password: z.string().min(1, "Current password is required"),
+    new_password: z.string().min(8, "Password must be at least 8 characters"),
+    confirm_password: z.string().min(1, "Please confirm your password"),
   })
-  .refine((data) => data.newPassword === data.confirmPassword, {
+  .refine((data) => data.new_password === data.confirm_password, {
     message: "Passwords don't match",
-    path: ["confirmPassword"],
+    path: ["confirm_password"],
   });
 
-type PasswordChangeSchema = z.infer<typeof passwordChangeSchema>;
+export type PasswordChangeSchema = z.infer<typeof passwordChangeSchema>;
 
 interface AccountSettingFormProps {
   defaultValues: AccountProfile;
@@ -38,19 +39,29 @@ interface AccountSettingFormProps {
 
 const AccountSettingForm = ({ defaultValues }: AccountSettingFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const { data: session } = useSession();
+
+  const user = session?.user;
 
   const form = useForm<PasswordChangeSchema>({
     resolver: zodResolver(passwordChangeSchema),
     defaultValues: {
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
+      old_password: "",
+      new_password: "",
+      confirm_password: "",
     },
   });
 
   function onSubmit(values: PasswordChangeSchema) {
     setIsLoading(true);
-    toast.promise(changePassword(values), {
+
+    if (!user?.username) {
+      toast.error("User not found");
+      setIsLoading(false);
+      return;
+    }
+
+    toast.promise(changePassword(values, user.username), {
       loading: "Changing password...",
       success: (data) => {
         setIsLoading(false);
@@ -74,7 +85,7 @@ const AccountSettingForm = ({ defaultValues }: AccountSettingFormProps) => {
               <div className="grid grid-cols-1 gap-4">
                 <FormField
                   control={form.control}
-                  name="currentPassword"
+                  name="old_password"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-sm font-medium">
@@ -93,7 +104,7 @@ const AccountSettingForm = ({ defaultValues }: AccountSettingFormProps) => {
                 />
                 <FormField
                   control={form.control}
-                  name="newPassword"
+                  name="new_password"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-sm font-medium">
@@ -112,7 +123,7 @@ const AccountSettingForm = ({ defaultValues }: AccountSettingFormProps) => {
                 />
                 <FormField
                   control={form.control}
-                  name="confirmPassword"
+                  name="confirm_password"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-sm font-medium">

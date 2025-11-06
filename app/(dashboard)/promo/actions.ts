@@ -1,93 +1,193 @@
 "use server";
 
-import { CreatePromoSchema, EditPromoSchema } from "./types";
+import { CreatePromoSchema } from "@/components/dashboard/promo/dialog/create-promo-dialog";
+import { EditPromoSchema } from "@/components/dashboard/promo/dialog/edit-promo-dialog";
+import { apiCall } from "@/lib/api";
+import { revalidatePath } from "next/cache";
 
-export async function updatePromoStatus(promoId: string, status: boolean) {
-  console.log("Update Promo Status");
-  // Simulate API call delay
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+export async function updatePromoStatus(formData: FormData) {
+  try {
+    const response = await apiCall(`promos/status`, {
+      method: "PUT",
+      body: formData,
+    });
 
-  // Simulate success response
-  return { success: true, message: `Promo status updated to ${status}` };
+    if (response.status !== 200) {
+      return {
+        success: false,
+        message: response.message || "Failed to update promo status",
+      };
+    }
+
+    revalidatePath("/promo", "layout");
+
+    return {
+      success: true,
+      message: response.message || "Promo status updated successfully",
+    };
+  } catch (error) {
+    console.error("Error editing promo:", error);
+
+    // Handle API error responses with specific messages
+    if (error && typeof error === "object" && "message" in error) {
+      return {
+        success: false,
+        message: error.message as string,
+      };
+    }
+
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Failed to edit promo",
+    };
+  }
 }
 
 export async function deletePromo(promoId: string) {
-  console.log("Delete Promo");
-  // Simulate API call delay
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  try {
+    const response = await apiCall(`promos/${promoId}`, {
+      method: "DELETE",
+    });
 
-  // Simulate success response
-  return { success: true, message: `Promo deleted` };
+    if (response.status !== 200) {
+      return {
+        success: false,
+        message: response.message || "Failed to remove promo",
+      };
+    }
+
+    revalidatePath("/promo", "layout");
+
+    return {
+      success: true,
+      message: response.message || "Promo has been successfully removed",
+    };
+  } catch (error) {
+    console.error("Error removing promo :", error);
+
+    // Handle API error responses with specific messages
+    if (error && typeof error === "object" && "message" in error) {
+      return {
+        success: false,
+        message: error.message as string,
+      };
+    }
+
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : "Failed to remove promo",
+    };
+  }
 }
 
-export async function createPromo(input: any) {
-  console.log("Create Promo:");
+export async function createPromo(input: CreatePromoSchema) {
+  try {
+    const body = {
+      description: input.description,
+      detail: input.detail.toString(),
+      end_date: input.end_date,
+      is_active: input.is_active,
+      promo_code: input.promo_code,
+      promo_name: input.promo_name,
+      promo_type: Number(input.promo_type),
+      room_types: [
+        {
+          room_type_id: input.room_type_id,
+          total_night: input.total_night,
+        },
+      ],
+      start_date: input.start_date,
+    };
 
-  // Validate conditional fields based on type
-  // if (input.type === "discount" && !input.discount_percentage) {
-  //   return {
-  //     success: false,
-  //     message: "Discount percentage is required for discount type",
-  //   };
-  // }
-  // if (input.type === "fixed_price" && !input.price_discount) {
-  //   return {
-  //     success: false,
-  //     message: "Price discount is required for fixed price type",
-  //   };
-  // }
-  // if (input.type === "room_upgrade" && !input.room_upgrade_to) {
-  //   return {
-  //     success: false,
-  //     message: "Room upgrade destination is required for room upgrade type",
-  //   };
-  // }
-  // if (input.type === "benefits" && !input.benefits) {
-  //   return {
-  //     success: false,
-  //     message: "Benefits description is required for benefits type",
-  //   };
-  // }
+    const response = await apiCall("promos", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
 
-  // Simulate API call delay
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+    if (response.status !== 200) {
+      return {
+        success: false,
+        message: response.message || "Failed to create promo",
+      };
+    }
 
-  // Simulate success response
-  return { success: true, message: "Promo created successfully" };
+    revalidatePath("/promo", "layout");
+
+    return {
+      success: true,
+      message: response.message || "Promo created",
+    };
+  } catch (error) {
+    console.error("Error creating promo:", error);
+
+    // Handle API error responses with specific messages
+    if (error && typeof error === "object" && "message" in error) {
+      return {
+        success: false,
+        message: error.message as string,
+      };
+    }
+
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : "Failed to create promo",
+    };
+  }
 }
 
 export async function editPromo(input: EditPromoSchema & { id: string }) {
-  console.log("Edit Promo:");
+  try {
+    const body = {
+      description: input.description,
+      detail: input.detail.toString(),
+      end_date: input.end_date,
+      is_active: input.is_active,
+      promo_code: input.promo_code,
+      promo_name: input.promo_name,
+      promo_type: Number(input.promo_type),
+      room_types: [
+        {
+          room_type_id: Number(input.room_type_id),
+          total_night: input.total_night,
+        },
+      ],
+      start_date: input.start_date,
+    };
 
-  // Validate conditional fields based on type
-  // if (input.type === "discount" && !input.discount_percentage) {
-  //   return {
-  //     success: false,
-  //     message: "Discount percentage is required for discount type",
-  //   };
-  // }
-  // if (input.type === "fixed_price" && !input.price_discount) {
-  //   return {
-  //     success: false,
-  //     message: "Price discount is required for fixed price type",
-  //   };
-  // }
-  // if (input.type === "room_upgrade" && !input.room_upgrade_to) {
-  //   return {
-  //     success: false,
-  //     message: "Room upgrade destination is required for room upgrade type",
-  //   };
-  // }
-  // if (input.type === "benefits" && !input.benefits) {
-  //   return {
-  //     success: false,
-  //     message: "Benefits description is required for benefits type",
-  //   };
-  // }
+    const response = await apiCall(`promos/${input.id}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    });
 
-  // Simulate API call delay
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+    if (response.status !== 200) {
+      return {
+        success: false,
+        message: response.message || "Failed to edit promo",
+      };
+    }
 
-  // Simulate success response
-  return { success: true, message: "Promo updated successfully" };
+    revalidatePath("/promo", "layout");
+
+    return {
+      success: true,
+      message: response.message || "Promo edited",
+    };
+  } catch (error) {
+    console.error("Error editing promo:", error);
+
+    // Handle API error responses with specific messages
+    if (error && typeof error === "object" && "message" in error) {
+      return {
+        success: false,
+        message: error.message as string,
+      };
+    }
+
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Failed to edit promo",
+    };
+  }
 }

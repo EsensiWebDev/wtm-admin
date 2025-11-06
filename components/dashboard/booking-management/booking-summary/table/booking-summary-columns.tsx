@@ -48,8 +48,8 @@ export function getBookingSummaryTableColumns({
       size: 40,
     },
     {
-      id: "guest_name",
-      accessorKey: "guest_name",
+      id: "search",
+      accessorKey: "search",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Guest Name" />
       ),
@@ -110,13 +110,12 @@ export function getBookingSummaryTableColumns({
       cell: ({ row }) => row.original.booking_id,
     },
     {
-      id: "booking_status",
-      accessorKey: "booking_status",
+      id: "booking_status_id",
+      accessorKey: "booking_status_id",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Booking Status" />
       ),
       cell: ({ row }) => {
-        // --- BEGIN: Select-based status change logic ---
         const [isUpdatePending, startUpdateTransition] = React.useTransition();
         const [selectValue, setSelectValue] = React.useState<BookingStatus>(
           row.original.booking_status
@@ -132,11 +131,11 @@ export function getBookingSummaryTableColumns({
           startUpdateTransition(() => {
             (async () => {
               try {
-                const result = await updateBookingStatus(
-                  String(row.original.booking_id),
-                  pendingValue,
-                  reason.trim()
-                );
+                const result = await updateBookingStatus({
+                  booking_id: String(row.original.booking_id),
+                  status_id: pendingValue,
+                  reason: reason.trim(),
+                });
                 if (result?.success) {
                   setSelectValue(pendingValue as BookingStatus);
                   setPendingValue(null);
@@ -157,17 +156,20 @@ export function getBookingSummaryTableColumns({
             })();
           });
         };
+
         const handleCancel = () => {
           setDialogOpen(false);
           setPendingValue(null);
           setReason("");
         };
+
         const getStatusColor = (value: string) => {
           if (value === "confirmed") return "text-green-600 bg-green-100";
           if (value === "rejected") return "text-red-600 bg-red-100";
           if (value === "in review") return "text-yellow-600 bg-yellow-100";
           return "";
         };
+
         return (
           <>
             <Label

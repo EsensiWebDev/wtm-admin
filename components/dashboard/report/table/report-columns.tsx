@@ -29,8 +29,8 @@ export function getReportTableColumns({
       size: 40,
     },
     {
-      id: "hotel_name",
-      accessorKey: "hotel_name",
+      id: "hotel_id",
+      accessorKey: "hotel_id",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Hotel Name" />
       ),
@@ -44,8 +44,8 @@ export function getReportTableColumns({
       enableColumnFilter: true,
     },
     {
-      id: "company",
-      accessorKey: "company",
+      id: "agent_company_id",
+      accessorKey: "agent_company_id",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Agent Company" />
       ),
@@ -59,8 +59,8 @@ export function getReportTableColumns({
       enableColumnFilter: true,
     },
     {
-      id: "name",
-      accessorKey: "name",
+      id: "search",
+      accessorKey: "search",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Agent Name" />
       ),

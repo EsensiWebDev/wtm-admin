@@ -1,7 +1,7 @@
 "use client";
 
-import { deletePromoGroup } from "@/app/(dashboard)/promo-group/actions";
-import { PromoGroup } from "@/app/(dashboard)/promo-group/types";
+import { removePromoGroupMembers } from "@/app/(dashboard)/promo-group/actions";
+import { PromoGroupMembers } from "@/app/(dashboard)/promo-group/types";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,45 +16,40 @@ import { Loader } from "lucide-react";
 import React from "react";
 import { toast } from "sonner";
 
-interface DeletePromoGroupDialogProps {
+interface DeletePromoGroupMemberDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  promoGroups: PromoGroup[];
+  member: PromoGroupMembers | null;
   showTrigger?: boolean;
   onSuccess?: () => void;
+  promoGroupId: string;
 }
 
-const DeletePromoGroupDialog = ({
+const DeletePromoGroupMemberDialog = ({
   open,
   onOpenChange,
-  promoGroups,
+  member,
   showTrigger = true,
   onSuccess,
-}: DeletePromoGroupDialogProps) => {
+  promoGroupId,
+}: DeletePromoGroupMemberDialogProps) => {
   const [isPending, startTransition] = React.useTransition();
 
+  if (!!!member) return;
+
   const handleDelete = () => {
-    if (promoGroups.length === 0) return;
-
     startTransition(async () => {
-      const deletePromises = promoGroups.map((promoGroup) =>
-        deletePromoGroup({ id: Number(promoGroup.id) })
+      toast.promise(
+        removePromoGroupMembers({
+          promo_group_id: Number(promoGroupId),
+          member_id: Number(member.id),
+        }),
+        {
+          loading: "Removing member...",
+          success: (data) => data.message,
+          error: "Failed to remove member",
+        }
       );
-      const results = await Promise.all(deletePromises);
-
-      const hasError = results.some((result) => !result.success);
-
-      if (hasError) {
-        toast.error("Failed to delete some promo groups");
-        return;
-      }
-
-      toast.success(
-        promoGroups.length === 1
-          ? "Promo group deleted successfully"
-          : `${promoGroups.length} promo groups deleted successfully`
-      );
-
       onOpenChange(false);
       onSuccess?.();
     });
@@ -65,19 +60,11 @@ const DeletePromoGroupDialog = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            Delete Promo Group{promoGroups.length > 1 ? "s" : ""}
+            Remove Promo Group Member
           </DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete{" "}
-            {promoGroups.length === 1 ? (
-              <>
-                <strong>{promoGroups[0]?.name}</strong>?
-              </>
-            ) : (
-              <>
-                <strong>{promoGroups.length} promo groups</strong>?
-              </>
-            )}{" "}
+            Are you sure you want to remove <strong>{member?.name}</strong>
+            <br />
             This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
@@ -101,4 +88,4 @@ const DeletePromoGroupDialog = ({
   );
 };
 
-export default DeletePromoGroupDialog;
+export default DeletePromoGroupMemberDialog;

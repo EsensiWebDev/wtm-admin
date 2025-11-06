@@ -63,8 +63,8 @@ export function getPromoTableColumns({
       enableHiding: false,
     },
     {
-      id: "name",
-      accessorKey: "name",
+      id: "search",
+      accessorKey: "search",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Promo Name" />
       ),
@@ -127,14 +127,15 @@ export function getPromoTableColumns({
               checked={row.original.is_active}
               onCheckedChange={(checked) => {
                 startUpdateTransition(() => {
-                  toast.promise(
-                    updatePromoStatus(String(row.original.id), checked),
-                    {
-                      loading: "Updating promo status...",
-                      success: (data) => data.message,
-                      error: "Failed to update promo status",
-                    }
-                  );
+                  const fd = new FormData();
+                  fd.append("promo_id", String(row.original.id));
+                  fd.append("is_active", String(checked));
+
+                  toast.promise(updatePromoStatus(fd), {
+                    loading: "Updating promo status...",
+                    success: (data) => data.message,
+                    error: "Failed to update promo status",
+                  });
                 });
               }}
               id={`${row.original.id}-status`}
