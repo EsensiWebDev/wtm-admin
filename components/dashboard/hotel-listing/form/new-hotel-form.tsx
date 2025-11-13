@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Loader } from "lucide-react";
+import { Loader, MapPin, Trash2 } from "lucide-react";
 import { useCallback, useTransition } from "react";
 import { createHotelNew } from "@/app/(dashboard)/hotel-listing/actions";
 import { ImageUpload, ImageFile } from "../create/image-upload";
@@ -148,7 +148,7 @@ const NewHotelForm = () => {
         <section>
           <div className="mb-10 grid grid-cols-1 gap-8 sm:grid-cols-3">
             {/* Rating and Basic Info */}
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-2">
               <FormField
                 control={form.control}
                 name="rating"
@@ -183,7 +183,7 @@ const NewHotelForm = () => {
                   </FormItem>
                 )}
               />
-              <div className="flex gap-2 mt-2">
+              <div className="flex gap-2">
                 <FormField
                   control={form.control}
                   name="sub_district"
@@ -236,19 +236,47 @@ const NewHotelForm = () => {
                   )}
                 />
               </div>
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    {/* <FormLabel>Email *</FormLabel> */}
+                    <FormControl>
+                      <Input
+                        type="email"
+                        className="bg-gray-200"
+                        placeholder="Enter hotel email address"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           </div>
 
           {/* Hotel Details */}
           <div className="mb-10 grid grid-cols-1 gap-8 sm:grid-cols-3">
-            {/* Description */}
+            {/* Description & Benefit */}
             <div className="flex flex-col gap-3">
               <h2 className="text-lg font-bold">Description & Benefit</h2>
-              <Textarea
-                className="h-full bg-gray-200"
-                placeholder="Insert Hotel Description here"
-                //   value={hotelDescription}
-                //   onChange={(e) => setHotelDescription(e.target.value)}
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Textarea
+                        className="h-full bg-gray-200"
+                        placeholder="Insert Hotel Description here"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
 
               {/* Social Media and Website Links */}
@@ -260,22 +288,94 @@ const NewHotelForm = () => {
                   <div className="bg-primary rounded-full p-1">
                     <IconBrandInstagramFilled className="h-5 w-5 text-white" />
                   </div>
-                  <Input
-                    placeholder="Instagram Link"
-                    //   value={hotelInstagram}
-                    className="bg-gray-200"
-                    //   onChange={(e) => setHotelInstagram(e.target.value)}
+                  <FormField
+                    control={form.control}
+                    name="social_medias"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input
+                            placeholder="Instagram Link"
+                            className="bg-gray-200"
+                            value={
+                              field.value?.find(
+                                (social) => social.platform === "instagram"
+                              )?.link || ""
+                            }
+                            onChange={(e) => {
+                              const currentSocialMedias = field.value || [];
+                              const instagramIndex =
+                                currentSocialMedias.findIndex(
+                                  (social) => social.platform === "instagram"
+                                );
+
+                              if (instagramIndex >= 0) {
+                                const updated = [...currentSocialMedias];
+                                updated[instagramIndex] = {
+                                  ...updated[instagramIndex],
+                                  link: e.target.value,
+                                };
+                                field.onChange(updated);
+                              } else {
+                                field.onChange([
+                                  ...currentSocialMedias,
+                                  {
+                                    platform: "instagram",
+                                    link: e.target.value,
+                                  },
+                                ]);
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="bg-primary rounded-full p-1">
                     <IconBrandTiktokFilled className="h-5 w-5 text-white" />
                   </div>
-                  <Input
-                    placeholder="TikTok Link"
-                    //   value={hotelTiktok}
-                    className="bg-gray-200"
-                    //   onChange={(e) => setHotelTiktok(e.target.value)}
+                  <FormField
+                    control={form.control}
+                    name="social_medias"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input
+                            placeholder="TikTok Link"
+                            className="bg-gray-200"
+                            value={
+                              field.value?.find(
+                                (social) => social.platform === "tiktok"
+                              )?.link || ""
+                            }
+                            onChange={(e) => {
+                              const currentSocialMedias = field.value || [];
+                              const tiktokIndex = currentSocialMedias.findIndex(
+                                (social) => social.platform === "tiktok"
+                              );
+
+                              if (tiktokIndex >= 0) {
+                                const updated = [...currentSocialMedias];
+                                updated[tiktokIndex] = {
+                                  ...updated[tiktokIndex],
+                                  link: e.target.value,
+                                };
+                                field.onChange(updated);
+                              } else {
+                                field.onChange([
+                                  ...currentSocialMedias,
+                                  { platform: "tiktok", link: e.target.value },
+                                ]);
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </div>
 
@@ -283,11 +383,46 @@ const NewHotelForm = () => {
                   <div className="bg-primary rounded-full p-1">
                     <IconWorld className="h-5 w-5 text-white" />
                   </div>
-                  <Input
-                    placeholder="Website Link"
-                    //   value={hotelWebsite}
-                    className="bg-gray-200"
-                    //   onChange={(e) => setHotelWebsite(e.target.value)}
+                  <FormField
+                    control={form.control}
+                    name="social_medias"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input
+                            placeholder="Website Link"
+                            className="bg-gray-200"
+                            value={
+                              field.value?.find(
+                                (social) => social.platform === "website"
+                              )?.link || ""
+                            }
+                            onChange={(e) => {
+                              const currentSocialMedias = field.value || [];
+                              const websiteIndex =
+                                currentSocialMedias.findIndex(
+                                  (social) => social.platform === "website"
+                                );
+
+                              if (websiteIndex >= 0) {
+                                const updated = [...currentSocialMedias];
+                                updated[websiteIndex] = {
+                                  ...updated[websiteIndex],
+                                  link: e.target.value,
+                                };
+                                field.onChange(updated);
+                              } else {
+                                field.onChange([
+                                  ...currentSocialMedias,
+                                  { platform: "website", link: e.target.value },
+                                ]);
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </div>
               </div>
@@ -341,44 +476,6 @@ const NewHotelForm = () => {
           </div>
         </section>
 
-        {/* Email */}
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email *</FormLabel>
-              <FormControl>
-                <Input
-                  type="email"
-                  placeholder="Enter email address"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Description */}
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Enter hotel description"
-                  className="resize-none"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         {/* Form Actions */}
         <div className="flex justify-end space-x-4 pt-6 border-t">
           <Button
@@ -403,5 +500,74 @@ const NewHotelForm = () => {
     </Form>
   );
 };
+
+// Nearby place item component
+const NearbyPlaceItem = ({
+  place,
+  index,
+  onUpdate,
+  onRemove,
+}: {
+  place: { name: string; distance: string };
+  index: number;
+  onUpdate: (index: number, place: { name: string; distance: string }) => void;
+  onRemove: (index: number) => void;
+}) => (
+  <div className="flex items-center gap-2">
+    <MapPin size={16} />
+    <Input
+      className="flex-1 bg-gray-200"
+      placeholder="Location Name"
+      value={place.name}
+      onChange={(e) => onUpdate(index, { ...place, name: e.target.value })}
+    />
+    <Input
+      className="w-18 bg-gray-200"
+      placeholder="Radius"
+      value={place.distance}
+      onChange={(e) => onUpdate(index, { ...place, distance: e.target.value })}
+    />
+    <Button
+      type="button"
+      variant="destructive"
+      size="icon"
+      aria-label={`Remove near place ${index + 1}`}
+      onClick={() => onRemove(index)}
+    >
+      <Trash2 className="size-4" />
+    </Button>
+  </div>
+);
+
+// Facility item component
+const FacilityItem = ({
+  facility,
+  index,
+  onUpdate,
+  onRemove,
+}: {
+  facility: string;
+  index: number;
+  onUpdate: (index: number, value: string) => void;
+  onRemove: (index: number) => void;
+}) => (
+  <div className="flex items-center gap-2">
+    <Input
+      className="bg-gray-200"
+      placeholder="Insert Hotel Facilities"
+      value={facility}
+      onChange={(e) => onUpdate(index, e.target.value)}
+    />
+    <Button
+      type="button"
+      variant="destructive"
+      size="icon"
+      aria-label={`Remove facility ${index + 1}`}
+      onClick={() => onRemove(index)}
+    >
+      <Trash2 className="size-4" />
+    </Button>
+  </div>
+);
 
 export default NewHotelForm;
