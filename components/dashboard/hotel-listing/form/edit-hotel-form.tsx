@@ -549,7 +549,7 @@ const EditHotelForm = ({ hotel, hotelId }: EditHotelFormProps) => {
         </section>
 
         {/* Form Actions */}
-        <div className="flex justify-end space-x-4 pt-6 border-t">
+        <div className="flex justify-end space-x-4 pb-6 border-b">
           <Button
             type="button"
             variant="outline"

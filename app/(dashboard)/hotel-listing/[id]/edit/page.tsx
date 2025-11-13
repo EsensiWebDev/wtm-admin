@@ -1,4 +1,5 @@
 import EditHotelForm from "@/components/dashboard/hotel-listing/form/edit-hotel-form";
+import RoomForm from "@/components/dashboard/hotel-listing/form/room-form";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
@@ -11,7 +12,7 @@ const EditHotelPage = async ({
 }) => {
   const { id } = await params;
   const response = await getHotelDetails(id);
-  const hotel = response.data;
+  const { data: hotel, status } = response;
 
   return (
     <div className="space-y-8">
@@ -22,7 +23,13 @@ const EditHotelPage = async ({
         </Link>
       </Button>
 
-      <EditHotelForm hotel={hotel} hotelId={id} />
+      {status !== 200 && <p>Error fetching hotel data</p>}
+      {status === 200 && (
+        <>
+          <EditHotelForm hotel={hotel} hotelId={id} />
+          <RoomForm />
+        </>
+      )}
     </div>
   );
 };

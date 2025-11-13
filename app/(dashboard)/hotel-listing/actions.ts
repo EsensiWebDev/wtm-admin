@@ -55,7 +55,7 @@ export async function createHotelNew(formData: FormData) {
 export async function updateHotel(hotelId: string, formData: FormData) {
   try {
     const response = await apiCall(`hotels/${hotelId}`, {
-      method: "POST",
+      method: "PUT",
       body: formData,
     });
 
