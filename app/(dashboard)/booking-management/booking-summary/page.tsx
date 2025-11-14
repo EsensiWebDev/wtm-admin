@@ -1,9 +1,12 @@
 import BookingManagementTable from "@/components/dashboard/booking-management/booking-summary/table/booking-summary-table";
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton";
+import {
+  getBookingStatusOptions,
+  getPaymentStatusOptions,
+} from "@/server/general";
 import React from "react";
 import { getData } from "./fetch";
 import { BookingSummaryPageProps } from "./types";
-import { getCompanyOptions } from "@/server/general";
 
 const BookingSummaryPage = async (props: BookingSummaryPageProps) => {
   const searchParams = await props.searchParams;
@@ -12,7 +15,8 @@ const BookingSummaryPage = async (props: BookingSummaryPageProps) => {
     getData({
       searchParams,
     }),
-    getCompanyOptions(),
+    getBookingStatusOptions(),
+    getPaymentStatusOptions(),
   ]);
 
   return (

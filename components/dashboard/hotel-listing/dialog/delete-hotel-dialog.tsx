@@ -52,7 +52,7 @@ export function DeleteHotelDialog({
       const hotelId = hotel[0].id;
 
       toast.promise(deleteHotel(hotelId), {
-        // loading: "Deleting hotel...",
+        loading: "Deleting hotel...",
         success: (data) => data.message,
         error: "Failed to delete hotel",
       });
@@ -77,9 +77,9 @@ export function DeleteHotelDialog({
           <DialogHeader>
             <DialogTitle>Are you absolutely sure?</DialogTitle>
             <DialogDescription>
-              This action cannot be undone. This will permanently delete your{" "}
-              <span className="font-medium">{hotel.length}</span>
-              {hotel.length === 1 ? " hotel" : " hotels"} from our servers.
+              This action cannot be undone. This will permanently delete{" "}
+              <span className="font-medium">{` ${hotel[0]?.name} `}</span>
+              from our servers.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:space-x-0">

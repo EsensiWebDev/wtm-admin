@@ -1,6 +1,7 @@
 "use client";
 
-import { createHotelNew } from "@/app/(dashboard)/hotel-listing/actions";
+import { updateHotel } from "@/app/(dashboard)/hotel-listing/actions";
+import { HotelDetail } from "@/app/(dashboard)/hotel-listing/types";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -26,7 +27,7 @@ import * as z from "zod";
 import { ImageFile, ImageUpload } from "../create/image-upload";
 
 // Define the Zod schema according to specifications
-export const createHotelFormSchema = z.object({
+export const editHotelFormSchema = z.object({
   name: z.string().min(1, "Hotel name is required"),
   photos: z
     .array(z.instanceof(File))
@@ -58,25 +59,34 @@ export const createHotelFormSchema = z.object({
   ),
 });
 
-export type CreateHotelFormValues = z.infer<typeof createHotelFormSchema>;
+export type EditHotelFormValues = z.infer<typeof editHotelFormSchema>;
 
-const NewHotelForm = () => {
+interface EditHotelFormProps {
+  hotel: HotelDetail;
+  hotelId: string;
+}
+
+const EditHotelForm = ({ hotel, hotelId }: EditHotelFormProps) => {
   const [isPending, startTransition] = useTransition();
 
-  const form = useForm<CreateHotelFormValues>({
-    resolver: zodResolver(createHotelFormSchema),
+  const form = useForm<EditHotelFormValues>({
+    resolver: zodResolver(editHotelFormSchema),
     defaultValues: {
-      name: "",
+      name: hotel.name || "",
       photos: [],
-      sub_district: "",
-      district: "",
-      province: "",
-      email: "",
-      description: "",
-      rating: 0,
-      nearby_places: [],
-      facilities: [],
-      social_medias: [],
+      sub_district: hotel.sub_district || "",
+      district: hotel.city || "",
+      province: hotel.province || "",
+      email: hotel.email || "",
+      description: hotel.description || "",
+      rating: hotel.rating || 0,
+      nearby_places:
+        hotel.nearby_place?.map((place) => ({
+          name: place.name,
+          distance: place.radius,
+        })) || [],
+      facilities: hotel.facilities || [],
+      social_medias: hotel.social_media || [],
     },
   });
 
@@ -154,7 +164,7 @@ const NewHotelForm = () => {
 
   // Handle form submission
   const onSubmit = useCallback(
-    async (data: CreateHotelFormValues) => {
+    async (data: EditHotelFormValues) => {
       startTransition(async () => {
         // Prepare FormData object
         const formData = new FormData();
@@ -175,17 +185,16 @@ const NewHotelForm = () => {
         });
         formData.append("social_medias", JSON.stringify(data.social_medias));
 
-        toast.promise(createHotelNew(formData), {
-          loading: "Creating hotel...",
+        toast.promise(updateHotel(hotelId, formData), {
+          loading: "Updating hotel...",
           success: ({ message }) => {
-            form.reset();
-            return message || `Hotel created successfully!`;
+            return message || `Hotel updated successfully!`;
           },
           error: "An unexpected error occurred. Please try again.",
         });
       });
     },
-    [form]
+    [hotelId]
   );
 
   return (
@@ -203,6 +212,7 @@ const NewHotelForm = () => {
             onImagesChange={handleImageChange}
             maxImages={10}
             maxSizeMB={2}
+            initialImages={hotel.photos || []}
           />
         </section>
 
@@ -541,7 +551,7 @@ const NewHotelForm = () => {
         </section>
 
         {/* Form Actions */}
-        <div className="flex justify-end space-x-4 pt-6 border-t">
+        <div className="flex justify-end space-x-4 pb-6 border-b">
           <Button
             type="button"
             variant="outline"
@@ -553,10 +563,10 @@ const NewHotelForm = () => {
             {isPending ? (
               <>
                 <Loader className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
+                Updating...
               </>
             ) : (
-              "Create Hotel"
+              "Update Hotel"
             )}
           </Button>
         </div>
@@ -634,4 +644,4 @@ const FacilityItem = ({
   </div>
 );
 
-export default NewHotelForm;
+export default EditHotelForm;

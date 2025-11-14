@@ -1,19 +1,21 @@
-import { HotelForm } from "@/components/dashboard/hotel-listing/form/hotel-form";
+import EditHotelForm from "@/components/dashboard/hotel-listing/form/edit-hotel-form";
+import RoomForm from "@/components/dashboard/hotel-listing/form/room-form";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
-import { fetchHotelDetail } from "./fetch";
+import { Suspense } from "react";
+import { getHotelDetails } from "../../fetch";
 
-const CreateHotelPage = async ({
+const EditHotelPage = async ({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) => {
   const { id } = await params;
-  const hotel = await fetchHotelDetail();
+  const response = await getHotelDetails(id);
+  const { data: hotel, status } = response;
 
-  // Add the ID to the hotel object for edit mode
-  const hotelWithId = { ...hotel, id };
+  console.log({ hotel, status });
 
   return (
     <div className="space-y-8">
@@ -24,9 +26,15 @@ const CreateHotelPage = async ({
         </Link>
       </Button>
 
-      <HotelForm hotel={hotelWithId} />
+      {status !== 200 && <p>Error fetching hotel data</p>}
+      {status === 200 && (
+        <Suspense fallback={<p>Loading...</p>} key={hotel.id}>
+          <EditHotelForm hotel={hotel} hotelId={id} />
+          <RoomForm hotelId={id} rooms={hotel.room_type} />
+        </Suspense>
+      )}
     </div>
   );
 };
 
-export default CreateHotelPage;
+export default EditHotelPage;

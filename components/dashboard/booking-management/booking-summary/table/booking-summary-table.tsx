@@ -5,7 +5,10 @@ import { BookingSummary } from "@/app/(dashboard)/booking-management/booking-sum
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { useDataTable } from "@/hooks/use-data-table";
-import { getCompanyOptions } from "@/server/general";
+import {
+  getBookingStatusOptions,
+  getPaymentStatusOptions,
+} from "@/server/general";
 import type { DataTableRowAction } from "@/types/data-table";
 import React, { useTransition } from "react";
 import { DeleteBookingSummaryDialog } from "../dialog/delete-booking-summary-dialog";
@@ -17,22 +20,27 @@ interface BookingSummaryTableProps {
   promises: Promise<
     [
       Awaited<ReturnType<typeof getData>>,
-      Awaited<ReturnType<typeof getCompanyOptions>>
+      Awaited<ReturnType<typeof getBookingStatusOptions>>,
+      Awaited<ReturnType<typeof getPaymentStatusOptions>>
     ]
   >;
 }
 
 const BookingSummaryTable = ({ promises }: BookingSummaryTableProps) => {
   const [isPending, startTransition] = useTransition();
-  const [{ data, pagination }, companyOptions] = React.use(promises);
+  const [{ data, pagination }, bookingStatusOptions, paymentStatusOptions] =
+    React.use(promises);
   const [rowAction, setRowAction] =
     React.useState<DataTableRowAction<BookingSummary> | null>(null);
+
+  console.log({ data });
 
   const columns = React.useMemo(
     () =>
       getBookingSummaryTableColumns({
         setRowAction,
-        companyOptions,
+        bookingStatusOptions,
+        paymentStatusOptions,
       }),
     []
   );
@@ -61,6 +69,7 @@ const BookingSummaryTable = ({ promises }: BookingSummaryTableProps) => {
         onOpenChange={() => setRowAction(null)}
         bookingSummary={rowAction?.row.original ?? null}
         onSuccess={() => rowAction?.row.toggleSelected(false)}
+        bookingStatusOptions={bookingStatusOptions}
       />
       {rowAction?.variant === "update" && (
         <EditBookingSummaryDialog
