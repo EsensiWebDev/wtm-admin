@@ -59,12 +59,8 @@ export const roomFormSchema = z.object({
       (files) => files.every((file) => file.size <= 2 * 1024 * 1024),
       "Each image must be less than 2MB"
     ),
-  without_breakfast: z
-    .array(withoutBreakfastSchema)
-    .length(1, "Exactly one without breakfast option is required"),
-  with_breakfast: z
-    .array(withBreakfastSchema)
-    .length(1, "Exactly one with breakfast option is required"),
+  without_breakfast: withoutBreakfastSchema,
+  with_breakfast: withBreakfastSchema,
   room_size: z
     .number()
     .min(0, "Room size must be a positive number")
@@ -104,12 +100,15 @@ export function RoomCardInput({
       // hotel_id: defaultValues?.hotel_id || 0,
       name: defaultValues?.name || "",
       photos: [],
-      without_breakfast: defaultValues?.without_breakfast || [
-        { is_show: true, price: 0 },
-      ],
-      with_breakfast: defaultValues?.with_breakfast || [
-        { is_show: true, pax: 2, price: 0 },
-      ],
+      without_breakfast: defaultValues?.without_breakfast || {
+        is_show: true,
+        price: 0,
+      },
+      with_breakfast: defaultValues?.with_breakfast || {
+        is_show: true,
+        pax: 2,
+        price: 0,
+      },
       room_size: defaultValues?.room_size || 0,
       max_occupancy: defaultValues?.max_occupancy || 1,
       bed_types: defaultValues?.bed_types || [""],
@@ -118,18 +117,6 @@ export function RoomCardInput({
       description: defaultValues?.description || "",
     },
   });
-
-  const { fields: withoutBreakfastFields, update: updateWithoutBreakfast } =
-    useFieldArray({
-      control: form.control,
-      name: "without_breakfast",
-    });
-
-  const { fields: withBreakfastFields, update: updateWithBreakfast } =
-    useFieldArray({
-      control: form.control,
-      name: "with_breakfast",
-    });
 
   const {
     fields: additionalFields,
@@ -195,15 +182,25 @@ export function RoomCardInput({
 
   // Toggle visibility for without breakfast option
   const toggleWithoutBreakfastVisibility = useCallback(() => {
-    const current = form.getValues("without_breakfast")[0];
-    updateWithoutBreakfast(0, { ...current, is_show: !current.is_show });
-  }, [form, updateWithoutBreakfast]);
+    const current = form.getValues("without_breakfast");
+
+    form.setValue("without_breakfast", {
+      ...current,
+      is_show: !current.is_show,
+    });
+  }, [form]);
 
   // Toggle visibility for with breakfast option
   const toggleWithBreakfastVisibility = useCallback(() => {
-    const current = form.getValues("with_breakfast")[0];
-    updateWithBreakfast(0, { ...current, is_show: !current.is_show });
-  }, [form, updateWithBreakfast]);
+    const current = form.getValues("with_breakfast");
+    form.setValue("with_breakfast", {
+      ...current,
+      is_show: !current.is_show,
+    });
+  }, [form]);
+
+  const isWithoutBreakfast = form.watch("without_breakfast");
+  const isWithBreakfast = form.watch("with_breakfast");
 
   return (
     <Form {...form}>
@@ -266,131 +263,34 @@ export function RoomCardInput({
 
                 {/* Without Breakfast Option */}
                 <div className="space-y-3">
-                  {withoutBreakfastFields.map((field, index) => (
+                  <div
+                    className={`flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center`}
+                  >
                     <div
-                      key={field.id}
-                      className={`flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center`}
+                      className={`flex w-full flex-1 items-start justify-between py-4 sm:items-center`}
                     >
-                      <div
-                        className={`flex w-full flex-1 items-start justify-between py-4 sm:items-center`}
-                      >
-                        <div>
-                          <h4 className="font-medium">Without Breakfast</h4>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="relative">
-                            <FormField
-                              control={form.control}
-                              name={`without_breakfast.${index}.price`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      className="bg-gray-200 pl-10"
-                                      placeholder="Rp"
-                                      {...field}
-                                      value={field.value || ""}
-                                      onChange={(e) =>
-                                        field.onChange(
-                                          e.target.value
-                                            ? Number(e.target.value)
-                                            : 0
-                                        )
-                                      }
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold">
-                              Rp
-                            </span>
-                          </div>
-                        </div>
+                      <div>
+                        <h4 className="font-medium">Without Breakfast</h4>
                       </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant={"ghost"}
-                          type="button"
-                          size={"icon"}
-                          onClick={toggleWithoutBreakfastVisibility}
-                        >
-                          {form.watch(`without_breakfast.${index}.is_show`) ? (
-                            <Eye className="size-4" />
-                          ) : (
-                            <EyeOff className="size-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <Separator />
-
-                {/* With Breakfast Option */}
-                <div className="space-y-3">
-                  {withBreakfastFields.map((field, index) => (
-                    <div
-                      key={field.id}
-                      className={`flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center`}
-                    >
-                      <div
-                        className={`flex w-full flex-1 items-start justify-between py-4 sm:items-center`}
-                      >
-                        <div>
-                          <h4 className="font-medium">With Breakfast</h4>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="relative">
-                            <FormField
-                              control={form.control}
-                              name={`with_breakfast.${index}.price`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      className="bg-gray-200 pl-10"
-                                      placeholder="Rp"
-                                      {...field}
-                                      value={field.value || ""}
-                                      onChange={(e) =>
-                                        field.onChange(
-                                          e.target.value
-                                            ? Number(e.target.value)
-                                            : 0
-                                        )
-                                      }
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold">
-                              Rp
-                            </span>
-                          </div>
+                      <div className="flex items-center gap-4">
+                        <div className="relative">
                           <FormField
                             control={form.control}
-                            name={`with_breakfast.${index}.pax`}
+                            name="without_breakfast.price"
                             render={({ field }) => (
                               <FormItem>
                                 <FormControl>
                                   <Input
                                     type="number"
-                                    className="bg-gray-200 w-20"
-                                    placeholder="Pax"
+                                    className="bg-gray-200 pl-10"
+                                    placeholder="Rp"
                                     {...field}
                                     value={field.value || ""}
                                     onChange={(e) =>
                                       field.onChange(
                                         e.target.value
                                           ? Number(e.target.value)
-                                          : 1
+                                          : 0
                                       )
                                     }
                                   />
@@ -399,24 +299,115 @@ export function RoomCardInput({
                               </FormItem>
                             )}
                           />
+                          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold">
+                            Rp
+                          </span>
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant={"ghost"}
-                          type="button"
-                          size={"icon"}
-                          onClick={toggleWithBreakfastVisibility}
-                        >
-                          {form.watch(`with_breakfast.${index}.is_show`) ? (
-                            <Eye className="size-4" />
-                          ) : (
-                            <EyeOff className="size-4" />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant={"ghost"}
+                        type="button"
+                        size={"icon"}
+                        onClick={toggleWithoutBreakfastVisibility}
+                      >
+                        {isWithoutBreakfast.is_show ? (
+                          <Eye className="size-4" />
+                        ) : (
+                          <EyeOff className="size-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* With Breakfast Option */}
+                <div className="space-y-3">
+                  <div
+                    className={`flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center`}
+                  >
+                    <div
+                      className={`flex w-full flex-1 items-start justify-between py-4 sm:items-center`}
+                    >
+                      <div>
+                        <h4 className="font-medium">With Breakfast</h4>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="relative">
+                          <FormField
+                            control={form.control}
+                            name={`with_breakfast.price`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    className="bg-gray-200 pl-10"
+                                    placeholder="Rp"
+                                    {...field}
+                                    value={field.value || ""}
+                                    onChange={(e) =>
+                                      field.onChange(
+                                        e.target.value
+                                          ? Number(e.target.value)
+                                          : 0
+                                      )
+                                    }
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold">
+                            Rp
+                          </span>
+                        </div>
+                        <FormField
+                          control={form.control}
+                          name={`with_breakfast.pax`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  className="bg-gray-200 w-20"
+                                  placeholder="Pax"
+                                  {...field}
+                                  value={field.value || ""}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      e.target.value
+                                        ? Number(e.target.value)
+                                        : 1
+                                    )
+                                  }
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
                           )}
-                        </Button>
+                        />
                       </div>
                     </div>
-                  ))}
+                    <div className="flex gap-2">
+                      <Button
+                        variant={"ghost"}
+                        type="button"
+                        size={"icon"}
+                        onClick={toggleWithBreakfastVisibility}
+                      >
+                        {isWithBreakfast.is_show ? (
+                          <Eye className="size-4" />
+                        ) : (
+                          <EyeOff className="size-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
 

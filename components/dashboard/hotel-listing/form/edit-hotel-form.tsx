@@ -180,7 +180,9 @@ const EditHotelForm = ({ hotel, hotelId }: EditHotelFormProps) => {
         if (data.description) formData.append("description", data.description);
         if (data.rating) formData.append("rating", String(data.rating));
         formData.append("nearby_places", JSON.stringify(data.nearby_places));
-        formData.append("facilities", JSON.stringify(data.facilities));
+        data.facilities?.forEach((facility) => {
+          formData.append("facilities", facility);
+        });
         formData.append("social_medias", JSON.stringify(data.social_medias));
 
         toast.promise(updateHotel(hotelId, formData), {

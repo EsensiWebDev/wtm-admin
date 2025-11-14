@@ -182,7 +182,7 @@ export async function createHotelRoomType(formData: FormData) {
       };
     }
 
-    revalidatePath("/hotel-listing", "layout");
+    revalidatePath("/hotel-listing/[slug]/edit", "layout");
 
     return {
       success: true,
@@ -254,7 +254,7 @@ export async function updateHotelRoomType(roomId: string, formData: FormData) {
 
 export async function removeHotelRoomType(roomId: string) {
   try {
-    const response = await apiCall(`hotels/room-type/${roomId}`, {
+    const response = await apiCall(`hotels/room-types/${roomId}`, {
       method: "DELETE",
     });
 
@@ -265,7 +265,7 @@ export async function removeHotelRoomType(roomId: string) {
       };
     }
 
-    revalidatePath("/hotel-listing/[id]/edit", "layout");
+    revalidatePath("/hotel-listing/[slug]/edit", "layout");
 
     return {
       success: true,

@@ -5,11 +5,11 @@ import {
   removeHotelRoomType,
   updateHotelRoomType,
 } from "@/app/(dashboard)/hotel-listing/actions";
+import { RoomDetail } from "@/app/(dashboard)/hotel-listing/types";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { toast } from "sonner";
 import { RoomCardInput, RoomFormValues } from "../create/room-card-input";
-import { RoomDetail } from "@/app/(dashboard)/hotel-listing/types";
-import { useState } from "react";
 
 const RoomForm = ({
   hotelId,
@@ -29,9 +29,9 @@ const RoomForm = ({
       name: "",
       photos: [],
       without_breakfast: { price: 0, is_show: true },
-      with_breakfast: { price: 0, pax: 1, is_show: true },
+      with_breakfast: { price: 0, pax: 2, is_show: true },
       room_size: 0,
-      max_occupancy: 1,
+      max_occupancy: 2,
       bed_types: [""],
       is_smoking_room: false,
       additional: [],
@@ -129,13 +129,13 @@ const RoomForm = ({
             defaultValues={{
               name: room.name,
               photos: [],
-              without_breakfast: [room.without_breakfast],
-              with_breakfast: [room.with_breakfast],
+              without_breakfast: room.without_breakfast,
+              with_breakfast: room.with_breakfast,
               room_size: room.room_size,
               max_occupancy: room.max_occupancy,
               bed_types: room.bed_types,
               is_smoking_room: room.is_smoking_room,
-              additional: room.additional.map((item) => ({
+              additional: room.additional?.map((item) => ({
                 name: item.name,
                 price: item.price,
               })),
