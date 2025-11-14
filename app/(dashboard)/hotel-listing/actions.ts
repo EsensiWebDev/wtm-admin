@@ -17,7 +17,7 @@ export async function deleteHotel(hotelId: string) {
       };
     }
 
-    revalidatePath("/hotel-listing/[id]/edit", "layout");
+    revalidatePath("/hotel-listing", "layout");
 
     return {
       success: true,

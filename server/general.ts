@@ -36,3 +36,45 @@ export const getHotelOptions = async (): Promise<Option[]> => {
     return [];
   }
 };
+
+export const getBookingStatusOptions = async (): Promise<Option[]> => {
+  try {
+    const apiResponse = await apiCall<{ id: number; status: string }[]>(
+      "/bookings/booking-status"
+    );
+
+    if (apiResponse.status === 200 && Array.isArray(apiResponse.data)) {
+      return apiResponse.data.map((bookingStatus) => ({
+        label: bookingStatus.status,
+        value: bookingStatus.id.toString(), // Using hotel ID now
+      }));
+    }
+
+    // Fallback to empty array if API call fails
+    return [];
+  } catch (error) {
+    console.error("Error fetching booking status options:", error);
+    return [];
+  }
+};
+
+export const getPaymentStatusOptions = async (): Promise<Option[]> => {
+  try {
+    const apiResponse = await apiCall<{ id: number; status: string }[]>(
+      "/bookings/payment-status"
+    );
+
+    if (apiResponse.status === 200 && Array.isArray(apiResponse.data)) {
+      return apiResponse.data.map((paymentStatus) => ({
+        label: paymentStatus.status,
+        value: paymentStatus.id.toString(), // Using hotel ID now
+      }));
+    }
+
+    // Fallback to empty array if API call fails
+    return [];
+  } catch (error) {
+    console.error("Error fetching payment options:", error);
+    return [];
+  }
+};
