@@ -152,7 +152,7 @@ export function getPromoTableColumns({
           { label: "Inactive", value: "false" },
         ],
       },
-      enableColumnFilter: true,
+      enableColumnFilter: false,
       enableHiding: false,
       enableSorting: false,
     },
