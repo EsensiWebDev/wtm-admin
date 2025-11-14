@@ -233,7 +233,12 @@ export function RoomCardInput({
                   type="button"
                   size="icon"
                   variant="destructive"
-                  onClick={() => onRemove(roomId)}
+                  disabled={isPending}
+                  onClick={() => {
+                    startTransition(async () => {
+                      onRemove(roomId);
+                    });
+                  }}
                 >
                   <Trash2 className="size-4" />
                 </Button>

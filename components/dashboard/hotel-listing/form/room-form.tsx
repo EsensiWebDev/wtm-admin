@@ -70,7 +70,16 @@ const RoomForm = ({
     });
   };
 
-  const onUpdate = (data: RoomFormValues) => {
+  const onRemove = (roomId: string) => {
+    toast.promise(removeHotelRoomType(roomId), {
+      loading: "Removing room type...",
+      success: ({ message }) => message,
+      error: ({ message }) => message,
+    });
+  };
+
+  // Create a wrapper function that includes roomId for the update operation
+  const createUpdateHandler = (roomId: string) => (data: RoomFormValues) => {
     const formData = new FormData();
     // formData.append("hotel_id", hotelId);
     formData.append("name", data.name);
@@ -91,16 +100,8 @@ const RoomForm = ({
     formData.append("additional", JSON.stringify(data.additional));
     formData.append("description", data.description || "");
 
-    toast.promise(updateHotelRoomType(formData), {
+    toast.promise(updateHotelRoomType(roomId, formData), {
       loading: "Updating room type...",
-      success: ({ message }) => message,
-      error: ({ message }) => message,
-    });
-  };
-
-  const onRemove = (roomId: string) => {
-    toast.promise(removeHotelRoomType(roomId), {
-      loading: "Removing room type...",
       success: ({ message }) => message,
       error: ({ message }) => message,
     });
@@ -142,7 +143,7 @@ const RoomForm = ({
             }}
             {
               ...(room.id > 0
-                ? { onUpdate, onRemove } // For existing rooms (positive IDs from database)
+                ? { onUpdate: createUpdateHandler(String(room.id)), onRemove } // For existing rooms (positive IDs from database)
                 : { onCreate }) // For new rooms (negative temporary IDs)
             }
           />
