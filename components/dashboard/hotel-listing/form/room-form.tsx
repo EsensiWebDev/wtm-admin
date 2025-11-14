@@ -1,6 +1,10 @@
 "use client";
 
-import { createHotelRoomType } from "@/app/(dashboard)/hotel-listing/actions";
+import {
+  createHotelRoomType,
+  removeHotelRoomType,
+  updateHotelRoomType,
+} from "@/app/(dashboard)/hotel-listing/actions";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { RoomCardInput, RoomFormValues } from "../create/room-card-input";
@@ -38,7 +42,7 @@ const RoomForm = ({
     setNewRoomCounter(newRoomCounter + 1);
   };
 
-  const onSubmit = (data: RoomFormValues) => {
+  const onCreate = (data: RoomFormValues) => {
     const formData = new FormData();
     formData.append("hotel_id", hotelId);
     formData.append("name", data.name);
@@ -61,6 +65,42 @@ const RoomForm = ({
 
     toast.promise(createHotelRoomType(formData), {
       loading: "Creating room type...",
+      success: ({ message }) => message,
+      error: ({ message }) => message,
+    });
+  };
+
+  const onUpdate = (data: RoomFormValues) => {
+    const formData = new FormData();
+    // formData.append("hotel_id", hotelId);
+    formData.append("name", data.name);
+    data.photos.forEach((photo) => {
+      formData.append("photos", photo);
+    });
+    formData.append(
+      "without_breakfast",
+      JSON.stringify(data.without_breakfast)
+    );
+    formData.append("with_breakfast", JSON.stringify(data.with_breakfast));
+    formData.append("room_size", String(data.room_size));
+    formData.append("max_occupancy", String(data.max_occupancy));
+    data.bed_types.forEach((bedType) => {
+      formData.append("bed_types", bedType);
+    });
+    formData.append("is_smoking_room", String(data.is_smoking_room));
+    formData.append("additional", JSON.stringify(data.additional));
+    formData.append("description", data.description || "");
+
+    toast.promise(updateHotelRoomType(formData), {
+      loading: "Updating room type...",
+      success: ({ message }) => message,
+      error: ({ message }) => message,
+    });
+  };
+
+  const onRemove = (roomId: string) => {
+    toast.promise(removeHotelRoomType(roomId), {
+      loading: "Removing room type...",
       success: ({ message }) => message,
       error: ({ message }) => message,
     });
@@ -100,7 +140,11 @@ const RoomForm = ({
               })),
               description: room.description,
             }}
-            onSubmit={onSubmit}
+            {
+              ...(room.id > 0
+                ? { onUpdate, onRemove } // For existing rooms (positive IDs from database)
+                : { onCreate }) // For new rooms (negative temporary IDs)
+            }
           />
         ))}
       </div>

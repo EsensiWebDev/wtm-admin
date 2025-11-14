@@ -167,8 +167,6 @@ export async function updateHotelStatus(hotelId: string, status: boolean) {
 }
 
 export async function createHotelRoomType(formData: FormData) {
-  console.log({ formData });
-
   try {
     const response = await apiCall("hotels/room-types", {
       method: "POST",

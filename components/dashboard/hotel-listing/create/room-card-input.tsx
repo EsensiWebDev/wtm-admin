@@ -86,7 +86,7 @@ interface RoomCardInputProps {
   defaultValues?: Partial<RoomFormValues>;
   onUpdate?: (room: RoomFormValues) => void;
   onRemove?: (id: string) => void;
-  onSubmit?: (data: RoomFormValues) => void;
+  onCreate?: (data: RoomFormValues) => void;
 }
 
 export function RoomCardInput({
@@ -94,21 +94,21 @@ export function RoomCardInput({
   defaultValues,
   onUpdate,
   onRemove,
-  onSubmit,
+  onCreate,
 }: RoomCardInputProps) {
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<RoomFormValues>({
     resolver: zodResolver(roomFormSchema),
     defaultValues: {
-      hotel_id: defaultValues?.hotel_id || 0,
+      // hotel_id: defaultValues?.hotel_id || 0,
       name: defaultValues?.name || "",
       photos: [],
       without_breakfast: defaultValues?.without_breakfast || [
         { is_show: true, price: 0 },
       ],
       with_breakfast: defaultValues?.with_breakfast || [
-        { is_show: true, pax: 1, price: 0 },
+        { is_show: true, pax: 2, price: 0 },
       ],
       room_size: defaultValues?.room_size || 0,
       max_occupancy: defaultValues?.max_occupancy || 1,
@@ -160,18 +160,13 @@ export function RoomCardInput({
     [bedTypes, form]
   );
 
-  const addBedType = useCallback(() => {
-    const newBedTypes = [...bedTypes, ""];
-    form.setValue("bed_types", newBedTypes);
-  }, [bedTypes, form]);
-
   // Handle image uploads from ImageUpload component
   const handleImageChange = useCallback(
     (newImages: { file?: File }[]) => {
       // Extract File objects for form validation
       const files = newImages
-        .filter((img) => img.file) // Only include newly uploaded files
-        .map((img) => img.file) as File[];
+        .filter((img): img is { file: File } => img.file !== undefined) // Type guard to ensure file exists
+        .map((img) => img.file);
       form.setValue("photos", files);
     },
     [form]
@@ -185,8 +180,8 @@ export function RoomCardInput({
   const handleSubmit = useCallback(
     async (data: RoomFormValues) => {
       startTransition(async () => {
-        if (onSubmit) {
-          onSubmit(data);
+        if (onCreate) {
+          onCreate(data);
         } else if (onUpdate) {
           onUpdate(data);
         } else {
@@ -195,7 +190,7 @@ export function RoomCardInput({
         }
       });
     },
-    [onSubmit, onUpdate]
+    [onCreate, onUpdate]
   );
 
   // Toggle visibility for without breakfast option
