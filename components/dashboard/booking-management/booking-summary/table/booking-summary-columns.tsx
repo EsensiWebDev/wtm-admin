@@ -102,7 +102,7 @@ export function getBookingSummaryTableColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Booking ID" />
       ),
-      cell: ({ row }) => row.original.booking_id,
+      cell: ({ row }) => row.original.booking_code,
     },
     {
       id: "booking_status_id",
@@ -111,9 +111,35 @@ export function getBookingSummaryTableColumns({
         <DataTableColumnHeader column={column} title="Booking Status" />
       ),
       cell: ({ row }) => {
+        const transformIntoValue = (text: string) => {
+          switch (text.toLowerCase()) {
+            case "confirmed":
+              return "3";
+            case "rejected":
+              return "4";
+            case "waiting approval":
+              return "2";
+            default:
+              return "";
+          }
+        };
+
+        const transformIntoText = (text: string) => {
+          switch (text.toLowerCase()) {
+            case "3":
+              return "Confirmed";
+            case "4":
+              return "Rejected";
+            case "2":
+              return "Waiting Approval";
+            default:
+              return "";
+          }
+        };
+
         const [isUpdatePending, startUpdateTransition] = React.useTransition();
-        const [selectValue, setSelectValue] = React.useState<BookingStatus>(
-          row.original.booking_status.toLowerCase() as BookingStatus
+        const [selectValue, setSelectValue] = React.useState<string>(
+          transformIntoValue(row.original.booking_status.toLowerCase())
         );
         const [dialogOpen, setDialogOpen] = React.useState(false);
         const [pendingValue, setPendingValue] = React.useState<string | null>(
@@ -126,12 +152,10 @@ export function getBookingSummaryTableColumns({
           startUpdateTransition(() => {
             (async () => {
               try {
-                const status_id = bookingStatusOptions.find(
-                  (option) => option.label.toLowerCase() === pendingValue
-                )?.value;
+                const status_id = pendingValue;
 
                 const result = await updateBookingStatus({
-                  booking_id: String(row.original.booking_id),
+                  booking_id: String(row.original.booking_code),
                   status_id: status_id || "",
                   reason: reason.trim(),
                 });
@@ -163,9 +187,9 @@ export function getBookingSummaryTableColumns({
         };
 
         const getStatusColor = (value: string) => {
-          if (value === "approved") return "text-green-600 bg-green-100";
-          if (value === "rejected") return "text-red-600 bg-red-100";
-          if (value === "in review") return "text-yellow-600 bg-yellow-100";
+          if (value === "3") return "text-green-600 bg-green-100";
+          if (value === "4") return "text-red-600 bg-red-100";
+          if (value === "2") return "text-yellow-600 bg-yellow-100";
           return "";
         };
 
@@ -194,9 +218,11 @@ export function getBookingSummaryTableColumns({
                 <SelectValue placeholder="Change status" />
               </SelectTrigger>
               <SelectContent align="end">
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-                <SelectItem value="in review">In Review</SelectItem>
+                {bookingStatusOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <ConfirmationDialog
@@ -218,7 +244,7 @@ export function getBookingSummaryTableColumns({
                         pendingValue
                       )}`}
                     >
-                      {pendingValue}
+                      {transformIntoText(pendingValue)}
                     </span>
                   </div>
                 )}
@@ -370,7 +396,7 @@ export function getBookingSummaryTableColumns({
         <DataTableColumnHeader column={column} title="Payment Receipt" />
       ),
       cell: ({ row }) => {
-        if (row.original.payment_status === "unpaid")
+        if (row.original.payment_status.toLowerCase() === "unpaid")
           return (
             <Button
               size={"sm"}

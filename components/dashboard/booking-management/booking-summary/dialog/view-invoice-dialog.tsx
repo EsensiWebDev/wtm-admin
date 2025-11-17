@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  BookingSummary,
+  BookingSummaryDetail,
+} from "@/app/(dashboard)/booking-management/booking-summary/types";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,11 +30,13 @@ interface ViewInvoiceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   // booking: HistoryBooking | null;
+  bookingSummary: BookingSummaryDetail | null;
 }
 
 const ViewInvoiceDialog: React.FC<ViewInvoiceDialogProps> = ({
   open,
   onOpenChange,
+  bookingSummary,
   // booking,
 }) => {
   const [state, setState] = useState<InvoiceDialogState>({
@@ -40,9 +46,11 @@ const ViewInvoiceDialog: React.FC<ViewInvoiceDialogProps> = ({
     isLoading: false,
   });
 
+  console.log({ bookingSummary });
+
   const invoiceData = {
-    bookingId: "BK-001",
-    guestName: "John Doe",
+    bookingId: bookingSummary?.invoice.sub_booking_id || "",
+    guestName: bookingSummary?.invoice.guest || "",
     bookingDate: "2025-08-20T16:13:34.961Z",
     checkInDate: "2025-09-22",
     checkOutDate: "2025-09-29",

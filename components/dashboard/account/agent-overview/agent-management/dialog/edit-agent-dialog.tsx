@@ -50,8 +50,6 @@ const EditAgentDialog = ({
   promoGroupSelect,
   ...props
 }: EditAgentDialogProps) => {
-  console.log({ agent });
-
   const [isPending, startTransition] = React.useTransition();
 
   const form = useForm<EditAgentSchema>({

@@ -152,9 +152,35 @@ const getDetailBookingColumns = ({
       <DataTableColumnHeader column={column} title="Booking Status" />
     ),
     cell: ({ row }) => {
+      const transformIntoValue = (text: string) => {
+        switch (text.toLowerCase()) {
+          case "confirmed":
+            return "3";
+          case "rejected":
+            return "4";
+          case "waiting approval":
+            return "2";
+          default:
+            return "";
+        }
+      };
+
+      const transformIntoText = (text: string) => {
+        switch (text.toLowerCase()) {
+          case "3":
+            return "Confirmed";
+          case "4":
+            return "Rejected";
+          case "2":
+            return "Waiting Approval";
+          default:
+            return "";
+        }
+      };
+
       const [isUpdatePending, startUpdateTransition] = React.useTransition();
-      const [selectValue, setSelectValue] = React.useState<BookingStatus>(
-        row.original.booking_status.toLowerCase() as BookingStatus
+      const [selectValue, setSelectValue] = React.useState<string>(
+        transformIntoValue(row.original.booking_status.toLowerCase())
       );
       const [dialogOpen, setDialogOpen] = React.useState(false);
       const [pendingValue, setPendingValue] = React.useState<string | null>(
@@ -167,14 +193,10 @@ const getDetailBookingColumns = ({
         startUpdateTransition(() => {
           (async () => {
             try {
-              const status_id = bookingStatusOptions.find(
-                (option) => option.label.toLowerCase() === pendingValue
-              )?.value;
-
-              console.log({ sub_booking_id: row.original.sub_booking_id });
+              const status_id = pendingValue;
 
               const result = await updateBookingStatus({
-                booking_detail_id: String(row.original.sub_booking_id),
+                sub_booking_id: String(row.original.sub_booking_id),
                 status_id: status_id || "",
                 reason: reason.trim(),
               });
@@ -206,9 +228,9 @@ const getDetailBookingColumns = ({
       };
 
       const getStatusColor = (value: string) => {
-        if (value === "approved") return "text-green-600 bg-green-100";
-        if (value === "rejected") return "text-red-600 bg-red-100";
-        if (value === "in review") return "text-yellow-600 bg-yellow-100";
+        if (value === "3") return "text-green-600 bg-green-100";
+        if (value === "4") return "text-red-600 bg-red-100";
+        if (value === "2") return "text-yellow-600 bg-yellow-100";
         return "";
       };
 
@@ -237,20 +259,13 @@ const getDetailBookingColumns = ({
               <SelectValue placeholder="Change status" />
             </SelectTrigger>
             <SelectContent align="end">
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-              <SelectItem value="in review">In Review</SelectItem>
+              {bookingStatusOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
-          {/* <ConfirmationDialog
-            open={dialogOpen}
-            onOpenChange={setDialogOpen}
-            onConfirm={handleConfirm}
-            onCancel={handleCancel}
-            isLoading={isUpdatePending}
-            title="Change Booking Status"
-            description="You're about to update the booking status for this booking."
-          /> */}
           <ConfirmationDialog
             open={dialogOpen}
             onOpenChange={setDialogOpen}
@@ -270,7 +285,7 @@ const getDetailBookingColumns = ({
                       pendingValue
                     )}`}
                   >
-                    {pendingValue}
+                    {transformIntoText(pendingValue)}
                   </span>
                 </div>
               )}
@@ -558,6 +573,7 @@ export function DetailBookingSummaryDialog({
         </DialogContent>
       </Dialog>
       <ViewInvoiceDialog
+        bookingSummary={rowAction?.row.original ?? null}
         open={rowAction?.variant === "invoice"}
         onOpenChange={() => setRowAction(null)}
       />

@@ -33,8 +33,6 @@ const BookingSummaryTable = ({ promises }: BookingSummaryTableProps) => {
   const [rowAction, setRowAction] =
     React.useState<DataTableRowAction<BookingSummary> | null>(null);
 
-  console.log({ data });
-
   const columns = React.useMemo(
     () =>
       getBookingSummaryTableColumns({
@@ -44,6 +42,8 @@ const BookingSummaryTable = ({ promises }: BookingSummaryTableProps) => {
       }),
     []
   );
+
+  console.log({ data });
 
   const { table } = useDataTable({
     data: data || [],

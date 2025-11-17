@@ -8,19 +8,19 @@ import { revalidatePath } from "next/cache";
 
 export async function updateBookingStatus(input: {
   booking_id?: string;
-  booking_detail_id?: string;
+  sub_booking_id?: string;
   status_id: string;
   reason?: string;
 }) {
   try {
     const body = {
       ...input,
-      booking_id: input.booking_id ? Number(input.booking_id) : undefined,
-      booking_detail_id: input.booking_detail_id
-        ? Number(input.booking_detail_id)
-        : undefined,
+      booking_id: input.booking_id ? input.booking_id : undefined,
+      sub_booking_id: input.sub_booking_id ? input.sub_booking_id : undefined,
       status_id: Number(input.status_id),
     };
+
+    console.log({ body });
 
     const response = await apiCall(`bookings/status`, {
       method: "POST",
