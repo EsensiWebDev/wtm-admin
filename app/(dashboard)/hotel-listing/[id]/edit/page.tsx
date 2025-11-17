@@ -15,8 +15,6 @@ const EditHotelPage = async ({
   const response = await getHotelDetails(id);
   const { data: hotel, status } = response;
 
-  console.log({ hotel, status });
-
   return (
     <div className="space-y-8">
       <Button variant={"ghost"} asChild>
