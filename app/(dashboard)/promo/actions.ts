@@ -87,13 +87,12 @@ export async function createPromo(input: CreatePromoSchema) {
       description: input.description,
       detail: input.detail.toString(),
       end_date: input.end_date,
-      is_active: input.is_active,
       promo_code: input.promo_code,
       promo_name: input.promo_name,
       promo_type: Number(input.promo_type),
       room_types: [
         {
-          room_type_id: input.room_type_id,
+          room_type_id: Number(input.room_type_id),
           total_night: input.total_night,
         },
       ],

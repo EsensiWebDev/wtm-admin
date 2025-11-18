@@ -12,15 +12,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader } from "lucide-react";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
 import { PromoForm } from "../form/promo-form";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { useQueryClient } from "@tanstack/react-query";
 
 // Enhanced validation schema with more robust rules and better error messages
 export const editPromoSchema = z
@@ -112,7 +112,7 @@ const promoDetailConversion = (
     case "2":
       return promoDetail.fixed_price;
     case "3":
-      return promoDetail.upgraded_to_id;
+      return promoDetail.upgraded_to_id.toString();
     case "4":
       return promoDetail.benefit_note;
     default:

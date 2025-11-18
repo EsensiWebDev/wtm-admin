@@ -52,7 +52,7 @@ export const createPromoSchema = z
       ),
     promo_type: z.string().min(1, "Promo type is required"),
     room_type_id: z.coerce
-      .number({
+      .string({
         invalid_type_error: "Room type is required",
         required_error: "Room type is required",
       })
@@ -78,7 +78,6 @@ export const createPromoSchema = z
         (date) => !isNaN(Date.parse(date)),
         "End date must be a valid date"
       ),
-    is_active: z.boolean(),
     hotel_name: z.string().min(1, "Hotel name is required"),
   })
   .refine(
@@ -107,6 +106,7 @@ const CreatePromoDialog = () => {
       promo_name: "",
       promo_code: "",
       promo_type: "1",
+      room_type_id: "",
       total_night: 1,
       start_date: "",
       end_date: "",
