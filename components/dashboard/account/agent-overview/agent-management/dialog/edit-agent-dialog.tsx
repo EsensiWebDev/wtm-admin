@@ -83,7 +83,7 @@ const EditAgentDialog = ({
 
   return (
     <Dialog {...props}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="sm:max-w-xl sm:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Agent</DialogTitle>
           <DialogDescription>

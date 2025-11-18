@@ -43,8 +43,6 @@ const BookingSummaryTable = ({ promises }: BookingSummaryTableProps) => {
     []
   );
 
-  console.log({ data });
-
   const { table } = useDataTable({
     data: data || [],
     columns,

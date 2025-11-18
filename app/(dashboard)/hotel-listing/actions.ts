@@ -125,16 +125,11 @@ export async function updateHotel(hotelId: string, formData: FormData) {
   }
 }
 
-export async function updateHotelStatus(hotelId: string, status: boolean) {
+export async function updateHotelStatus(formData: FormData) {
   try {
-    const body = {
-      hotel_id: Number(hotelId),
-      status,
-    };
-
-    const response = await apiCall(`hotels/${hotelId}`, {
+    const response = await apiCall(`hotels/status`, {
       method: "PUT",
-      body: JSON.stringify(body),
+      body: formData,
     });
 
     if (response.status !== 200) {
