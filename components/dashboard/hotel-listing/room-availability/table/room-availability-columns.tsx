@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { DataTableRowAction } from "@/types/data-table";
+import { DataTableRowAction, Option } from "@/types/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { Ellipsis, Text } from "lucide-react";
 import React from "react";
@@ -16,10 +16,12 @@ interface GetRoomAvailabilityTableColumnsProps {
   setRowAction: React.Dispatch<
     React.SetStateAction<DataTableRowAction<Hotel> | null>
   >;
+  regionOptions: Option[];
 }
 
 export function getRoomAvailabilityTableColumns({
   setRowAction,
+  regionOptions,
 }: GetRoomAvailabilityTableColumnsProps): ColumnDef<Hotel>[] {
   return [
     {
@@ -31,7 +33,7 @@ export function getRoomAvailabilityTableColumns({
       size: 10,
     },
     {
-      id: "hotel_name",
+      id: "search",
       accessorKey: "name",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Hotel Name" />
@@ -69,16 +71,7 @@ export function getRoomAvailabilityTableColumns({
         label: "Region",
         placeholder: "Search region...",
         variant: "multiSelect",
-        options: [
-          {
-            label: "Jakarta",
-            value: "Jakarta",
-          },
-          {
-            label: "Denpasar",
-            value: "Denpasar",
-          },
-        ],
+        options: regionOptions,
       },
       enableColumnFilter: true,
       enableHiding: false,

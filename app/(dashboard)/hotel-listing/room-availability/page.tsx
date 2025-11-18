@@ -3,6 +3,7 @@ import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton";
 import React from "react";
 import { getData } from "./fetch";
 import { RoomAvailabilityPageProps } from "./types";
+import { getRegionOptions } from "@/server/general";
 
 const HotelPage = async (props: RoomAvailabilityPageProps) => {
   const searchParams = await props.searchParams;
@@ -11,6 +12,7 @@ const HotelPage = async (props: RoomAvailabilityPageProps) => {
     getData({
       searchParams,
     }),
+    getRegionOptions(),
   ]);
 
   return (
