@@ -43,6 +43,8 @@ export const getBookingStatusOptions = async (): Promise<Option[]> => {
       "/bookings/booking-status"
     );
 
+    console.log({ apiResponse });
+
     if (apiResponse.status === 200 && Array.isArray(apiResponse.data)) {
       return apiResponse.data.map((bookingStatus) => ({
         label: bookingStatus.status,

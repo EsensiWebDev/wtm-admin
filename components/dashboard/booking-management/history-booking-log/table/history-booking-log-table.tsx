@@ -44,7 +44,7 @@ const HistoryBookingLogTable = ({ promises }: HistoryBookingLogTableProps) => {
     data: data || [],
     columns,
     pageCount: pagination?.total_pages || 1,
-    getRowId: (originalRow) => originalRow.booking_code,
+    getRowId: (originalRow, index) => `${index}-${originalRow.booking_code}`,
     shallow: false,
     clearOnDefault: true,
     startTransition,

@@ -266,7 +266,6 @@ export function getBookingSummaryTableColumns({
             </ConfirmationDialog>
           </>
         );
-        // --- END: Select-based status change logic ---
       },
       meta: {
         label: "Booking Status",
