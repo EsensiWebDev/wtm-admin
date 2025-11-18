@@ -56,16 +56,16 @@ const CreatePromoDialog = () => {
 
   function onSubmit(input: CreatePromoSchema) {
     startTransition(async () => {
-      const { success } = await createPromo(input);
+      const { success, message } = await createPromo(input);
 
       if (!success) {
-        toast.error("Failed to create promo");
+        toast.error(message || "Failed to create promo");
         return;
       }
 
       form.reset();
       setOpen(false);
-      toast.success("Promo created successfully");
+      toast.success(message || "Promo created successfully");
     });
   }
 

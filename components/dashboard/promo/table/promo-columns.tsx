@@ -171,11 +171,11 @@ export function getPromoTableColumns({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem
+              {/* <DropdownMenuItem
                 onSelect={() => setRowAction({ row, variant: "detail" })}
               >
                 Details
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuItem
                 onSelect={() => setRowAction({ row, variant: "update" })}
               >
