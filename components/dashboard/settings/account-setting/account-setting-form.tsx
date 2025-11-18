@@ -41,6 +41,7 @@ interface AccountSettingFormProps {
 const AccountSettingForm = ({ defaultValues }: AccountSettingFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { data: session } = useSession();
+  const isSuperAdmin = session?.user?.role.toLowerCase() === "super admin";
 
   const user = session?.user;
 
@@ -63,18 +64,24 @@ const AccountSettingForm = ({ defaultValues }: AccountSettingFormProps) => {
       return;
     }
 
-    toast.promise(changePassword(values), {
-      loading: "Changing password...",
-      success: (data) => {
-        setIsLoading(false);
-        form.reset();
-        return data.message || "Password changed successfully";
-      },
-      error: (error) => {
-        setIsLoading(false);
-        return error.message || "Failed to change password";
-      },
-    });
+    toast.promise(
+      changePassword({
+        ...values,
+        username: isSuperAdmin ? values.username : user.username,
+      }),
+      {
+        loading: "Changing password...",
+        success: (data) => {
+          setIsLoading(false);
+          form.reset();
+          return data.message || "Password changed successfully";
+        },
+        error: (error) => {
+          setIsLoading(false);
+          return error.message || "Failed to change password";
+        },
+      }
+    );
   }
 
   return (
@@ -95,8 +102,8 @@ const AccountSettingForm = ({ defaultValues }: AccountSettingFormProps) => {
                       </FormLabel>
                       <FormControl>
                         <Input
-                          disabled
-                          readOnly
+                          disabled={!isSuperAdmin}
+                          readOnly={!isSuperAdmin}
                           placeholder="Enter your username"
                           {...field}
                         />

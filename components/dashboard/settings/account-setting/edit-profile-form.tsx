@@ -21,16 +21,34 @@ import { toast } from "sonner";
 import z from "zod";
 
 const profileSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  full_name: z.string().min(1, "Full name is required"),
-  email: z.string().email().min(1, "Email is required"),
+  full_name: z
+    .string()
+    .min(2, "Full name must be at least 2 characters")
+    .regex(
+      /^[a-zA-Z\s'-]+$/,
+      "Full name can only contain alphabetic characters, spaces, hyphens, and apostrophes"
+    )
+    .refine((value) => {
+      // Ensure at least one alphabetic character exists
+      return /[a-zA-Z]/.test(value);
+    }, "Full name must contain at least one alphabetic character"),
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .email("Please enter a valid email address"),
   phone: z
     .string()
     .min(1, "Phone number is required")
     .regex(
-      /^(\+62|62|0)?8[1-9][0-9]{6,9}$/,
-      "Please enter a valid phone number"
-    ),
+      /^\+[1-9]\d{1,14}$/,
+      "Phone number must start with '+' followed by country code and national number (E.164 format)"
+    )
+    .refine((value) => {
+      // Validate E.164 format: +[1-9]{1-3}[0-9]{6,14}
+      // This allows for country codes (1-3 digits) and national numbers (6-14 digits)
+      const match = value.match(/^\+(\d{1,3})(\d{6,14})$/);
+      return match !== null;
+    }, "Phone number must follow E.164 format: + then 1-3 digit country code, then 6-14 digit national number"),
 });
 
 export type ProfileSchema = z.infer<typeof profileSchema>;
@@ -46,7 +64,6 @@ const EditProfileForm = ({ defaultValues }: EditProfileFormProps) => {
   const form = useForm<ProfileSchema>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      username: defaultValues.username,
       full_name: defaultValues.full_name,
       email: defaultValues.email,
       phone: defaultValues.phone,
@@ -78,21 +95,6 @@ const EditProfileForm = ({ defaultValues }: EditProfileFormProps) => {
           <div className="min-w-[180px] font-medium">Edit Profile</div>
           <div className="flex-1">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem className="col-span-2">
-                    <FormLabel className="text-sm font-medium">
-                      Username
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter username" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <FormField
                 control={form.control}
                 name="full_name"
