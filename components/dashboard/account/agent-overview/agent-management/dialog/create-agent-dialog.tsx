@@ -35,10 +35,25 @@ export const createAgentSchema = z.object({
     ),
   is_active: z.boolean(),
   kakao_talk_id: z.string().min(1, "KakaoTalk ID is required").max(25),
-  photo_selfie: z.instanceof(File),
-  photo_id_card: z.instanceof(File),
+  photo_selfie: z
+    .instanceof(File, { message: "This field is required" })
+    .refine((file) => file instanceof File, {
+      message: "This field is required",
+      path: ["photo_selfie"],
+    }),
+  photo_id_card: z
+    .instanceof(File, { message: "This field is required" })
+    .refine((file) => file instanceof File, {
+      message: "This field is required",
+      path: ["photo_id_card"],
+    }),
   certificate: z.instanceof(File).optional(),
-  name_card: z.instanceof(File),
+  name_card: z
+    .instanceof(File, { message: "This field is required" })
+    .refine((file) => file instanceof File, {
+      message: "This field is required",
+      path: ["name_card"],
+    }),
 });
 
 export type CreateAgentSchema = z.infer<typeof createAgentSchema>;
