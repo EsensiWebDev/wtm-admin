@@ -102,7 +102,7 @@ export const UploadReceiptDialog: React.FC<UploadReceiptDialogProps> = ({
 
     startTransition(async () => {
       const formData = new FormData();
-      formData.append("file", selectedFile);
+      formData.append("receipt", selectedFile);
 
       if (bookingId) {
         formData.append("booking_id", bookingId);

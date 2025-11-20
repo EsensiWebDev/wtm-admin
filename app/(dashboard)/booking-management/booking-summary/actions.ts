@@ -113,11 +113,11 @@ export async function editBooking(
 
 export async function uploadReceipt(formData: FormData) {
   try {
-    const file = formData.get("file") as File | null;
+    const receipt = formData.get("receipt") as File | null;
     const bookingId = formData.get("booking_id") as string | null;
     const subBookingId = formData.get("sub_booking_id") as string | null;
 
-    if (!file) {
+    if (!receipt) {
       return {
         success: false,
         message: "No file provided",
@@ -127,20 +127,29 @@ export async function uploadReceipt(formData: FormData) {
     // Log for debugging purposes
     console.log("Upload Receipt:");
     console.log({
-      fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type,
-      bookingId,
-      subBookingId,
+      formData,
     });
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const response = await apiCall("bookings/receipt", {
+      method: "POST",
+      body: formData,
+    });
+
+    console.log({ response });
+
+    if (response.status !== 200) {
+      return {
+        success: false,
+        message: response.message || "Failed to upload receipt",
+      };
+    }
+
+    revalidatePath("/booking-management/booking-summary", "layout");
 
     // For now, just return success without actual processing
     return {
       success: true,
-      message: "Receipt uploaded successfully",
+      message: response.message || "Receipt uploaded successfully",
     };
   } catch (error) {
     console.error("Error uploading receipt:", error);
