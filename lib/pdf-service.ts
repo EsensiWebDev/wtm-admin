@@ -1,4 +1,8 @@
 import InvoicePDFDocument from "@/components/dashboard/booking-management/booking-summary/dialog/invoice-pdf-document";
+import {
+  NewInvoicePDFDocument,
+  NewInvoiceData,
+} from "@/components/dashboard/booking-management/booking-summary/dialog/new-invoice-pdf-document";
 import { ComprehensiveInvoiceData, InvoiceErrorType } from "@/types/invoice";
 import { pdf } from "@react-pdf/renderer";
 import React from "react";
@@ -13,6 +17,32 @@ export class PDFService {
     try {
       // Create the PDF document component using React.createElement
       const documentElement = React.createElement(InvoicePDFDocument, {
+        invoice: invoiceData,
+      });
+
+      // Generate PDF blob
+      const blob = await pdf(documentElement as any).toBlob();
+
+      if (!blob) {
+        throw new Error("Failed to generate PDF blob");
+      }
+
+      return blob;
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      throw new Error(InvoiceErrorType.PDF_GENERATION_FAILED);
+    }
+  }
+
+  /**
+   * Generate a PDF blob from new invoice data format
+   */
+  static async generateNewInvoicePDF(
+    invoiceData: NewInvoiceData
+  ): Promise<Blob> {
+    try {
+      // Create the PDF document component using React.createElement
+      const documentElement = React.createElement(NewInvoicePDFDocument, {
         invoice: invoiceData,
       });
 
@@ -54,6 +84,51 @@ export class PDFService {
     } catch (error) {
       console.error("PDF download error:", error);
       throw new Error(InvoiceErrorType.DOWNLOAD_FAILED);
+    }
+  }
+
+  /**
+   * Generate a standardized filename for new invoice format
+   */
+  static generateNewInvoiceFilename(invoiceData: NewInvoiceData): string {
+    const sanitizedInvoiceNumber = invoiceData.invoiceNumber.replace(
+      /[^a-zA-Z0-9-_]/g,
+      "_"
+    );
+    const sanitizedGuestName = invoiceData.guestName
+      .replace(/[^a-zA-Z0-9\s]/g, "")
+      .replace(/\s+/g, "_")
+      .toLowerCase();
+
+    const date = new Date().toISOString().split("T")[0];
+
+    return `invoice_${sanitizedInvoiceNumber}_${sanitizedGuestName}_${date}.pdf`;
+  }
+
+  /**
+   * Generate and download new invoice PDF in one operation
+   */
+  static async generateAndDownloadNewInvoice(
+    invoiceData: NewInvoiceData,
+    onProgress?: (step: string) => void
+  ): Promise<void> {
+    try {
+      // Step 1: Generate PDF
+      onProgress?.("Generating PDF document...");
+      const pdfBlob = await this.generateNewInvoicePDF(invoiceData);
+
+      // Step 2: Prepare filename
+      onProgress?.("Preparing download...");
+      const filename = this.generateNewInvoiceFilename(invoiceData);
+
+      // Step 3: Download
+      onProgress?.("Starting download...");
+      this.downloadPDF(pdfBlob, filename);
+
+      onProgress?.("Download completed");
+    } catch (error) {
+      console.error("Invoice PDF generation and download error:", error);
+      throw error;
     }
   }
 

@@ -23,8 +23,50 @@ import {
   IconFileText,
   IconRosetteDiscount,
 } from "@tabler/icons-react";
+import { format, isValid } from "date-fns";
 import React, { useState } from "react";
 import { toast } from "sonner";
+import { NewInvoiceData } from "./new-invoice-pdf-document";
+
+/**
+ * Validates and formats a date string. Returns formatted date or error message.
+ * @param dateString - The date string to validate and format
+ * @param errorMessage - The error message to return if validation fails
+ * @param formatPattern - The date format pattern (default: "dd.MM.yy")
+ * @returns Formatted date string or error message
+ */
+const validateAndFormatDate = (
+  dateString: string | undefined | null,
+  errorMessage: string,
+  formatPattern: string = "dd.MM.yy"
+): string => {
+  // Check if dateString is missing or empty
+  if (
+    !dateString ||
+    typeof dateString !== "string" ||
+    dateString.trim() === ""
+  ) {
+    return errorMessage;
+  }
+
+  try {
+    const date = new Date(dateString);
+
+    // Validate if the date is a valid date object
+    if (!isValid(date)) {
+      return errorMessage;
+    }
+
+    // Check if the date string is actually a valid date (not just any string)
+    if (isNaN(date.getTime())) {
+      return errorMessage;
+    }
+
+    return format(date, formatPattern);
+  } catch {
+    return errorMessage;
+  }
+};
 
 interface ViewInvoiceDialogProps {
   open: boolean;
@@ -46,106 +88,57 @@ const ViewInvoiceDialog: React.FC<ViewInvoiceDialogProps> = ({
     isLoading: false,
   });
 
-  console.log({ bookingSummary });
+  const invoice = bookingSummary?.invoice;
 
-  const invoiceData = {
-    bookingId: bookingSummary?.invoice.sub_booking_id || "",
-    guestName: bookingSummary?.invoice.guest || "",
-    bookingDate: "2025-08-20T16:13:34.961Z",
-    checkInDate: "2025-09-22",
-    checkOutDate: "2025-09-29",
-    hotelName: "Grand Hyatt Jakarta",
-    hotelAddress: "Jl. H.R. Rasuna Said, Jakarta Selatan, 12940",
-    roomType: "Standard Room",
-    numberOfNights: 7,
-    numberOfGuests: 4,
-    basePrice: 2500000,
-    taxes: 1925000,
-    serviceFee: 875000,
-    discount: 2625000,
-    totalAmount: 17675000,
-    currency: "IDR",
-    subtotal: 17500000,
-    taxRate: 0.11,
-    discountRate: 0.15,
-    bookingStatus: "approved",
-    paymentStatus: "paid",
-    invoiceNumber: "INV-2025-7270",
-    invoiceDate: "2025-09-06T04:27:58.397Z",
-    dueDate: "2025-10-06T04:27:58.397Z",
-    notes: "VIP guest, early check-in.",
-    hotelRating: 5,
-    amenities: [
-      "Swimming Pool",
-      "Conference Rooms",
-      "Restaurant",
-      "Fitness Center",
-      "Parking",
-      "Room Service",
-      "Laundry Service",
-      "Spa Services",
-    ],
-    roomDescription:
-      "Comfortable room with essential amenities and quality furnishings.",
-    cancellationPolicy: "Free cancellation up to 48 hours before check-in.",
-    company: {
-      name: "PT. World Travel Marketing Bali",
-      address:
-        "Ikat Plaza Building - Jl. Bypass Ngurah Rai No. 505\nPemogan - Denpasar Selatan\n80221 Denpasar - Bali - Indonesia",
-      phone: "0361 4756583",
-      email: "info.wtmbali@gmail.com",
-      website: "www.wtmbali.com",
+  const newInvoiceData = {
+    invoiceNumber: invoice?.invoice_number || "Invoice Number Not Found",
+    companyName: invoice?.company_agent || "Company Name Not Found",
+    agentName: invoice?.agent || "Agent Name Not Found",
+    agentEmail: invoice?.email || "Email Not Found",
+    hotelName: invoice?.hotel || "Hotel Name Not Found",
+    guestName: invoice?.guest || "Guest Name Not Found",
+    checkInDate: validateAndFormatDate(
+      invoice?.check_in,
+      "Check-in Date Not Found",
+      "dd.MM.yy"
+    ),
+    checkOutDate: validateAndFormatDate(
+      invoice?.check_out,
+      "Check-out Date Not Found",
+      "dd.MM.yy"
+    ),
+    invoiceDate: validateAndFormatDate(
+      invoice?.invoice_date,
+      "Invoice Date Not Found",
+      "dd.MM.yy"
+    ),
+    subBookingId: invoice?.sub_booking_id || "Sub-Booking ID Not Found",
+    items: invoice?.description_invoice || [],
+    totalPrice: invoice?.total_price || 0,
+    totalBeforePromo: invoice?.total_before_promo || 0,
+    promo: {
+      ...invoice?.promo,
     },
-    customer: {
-      name: "John Doe",
-      email: "john.doe@email.com",
-      phone: "+62 924732368",
-      address: "Jakarta, Indonesia",
-      companyName: "Company Name",
-      agentName: "Agent Name",
-    },
-    lineItems: [
-      {
-        description: "Standard Room - 7 nights",
-        quantity: 7,
-        unitPrice: 2500000,
-        total: 17500000,
-      },
-      {
-        description: "Service Fee",
-        quantity: 1,
-        unitPrice: 875000,
-        total: 875000,
-      },
-    ],
-    paymentMethod: "Cash",
-    termsAndConditions:
-      "1. Payment is due within 30 days of invoice date.\n2. Late payments may incur additional charges.\n3. Cancellation policies apply as per booking terms.\n4. All prices are in Indonesian Rupiah (IDR).\n5. Disputes must be reported within 7 days of service completion.",
-  } as ComprehensiveInvoiceData;
+  };
 
   // Handle PDF download
   const handleDownloadPDF = async () => {
-    // if (!invoiceData) {
-    //   toast.error("No invoice data available");
-    //   return;
-    // }
+    if (!newInvoiceData) {
+      toast.error("No invoice data available");
+      return;
+    }
 
     try {
       setState((prev) => ({ ...prev, isGeneratingPDF: true, error: null }));
 
-      // Validate invoice data
-      const validation = PDFService.validateInvoiceData(invoiceData);
-      if (!validation.isValid) {
-        throw new Error(
-          `Invalid invoice data: ${validation.errors.join(", ")}`
-        );
-      }
-
-      // Generate and download PDF
-      await PDFService.generateAndDownloadInvoice(invoiceData, (step) => {
-        // You could show progress here if needed
-        console.log("PDF Generation:", step);
-      });
+      // Use centralized PDFService for PDF generation and download
+      await PDFService.generateAndDownloadNewInvoice(
+        newInvoiceData as NewInvoiceData,
+        (step) => {
+          // Optional: You could show progress here if needed
+          console.log("PDF Generation:", step);
+        }
+      );
 
       toast.success("Invoice PDF downloaded successfully!");
     } catch (error) {
@@ -174,7 +167,7 @@ const ViewInvoiceDialog: React.FC<ViewInvoiceDialogProps> = ({
   //   );
   // }
 
-  if (!invoiceData) {
+  if (!newInvoiceData) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="w-[95vw] max-w-7xl px-8">
@@ -197,7 +190,7 @@ const ViewInvoiceDialog: React.FC<ViewInvoiceDialogProps> = ({
           <DialogTitle className="flex items-center justify-between">
             <div className="sr-only flex items-center gap-2">
               <IconFileText className="h-5 w-5" />
-              Invoice #{invoiceData.invoiceNumber}
+              Invoice #{newInvoiceData.invoiceNumber}
             </div>
           </DialogTitle>
         </DialogHeader>
@@ -228,7 +221,7 @@ const ViewInvoiceDialog: React.FC<ViewInvoiceDialogProps> = ({
             <div className="text-right">
               <h1 className="text-3xl font-bold text-gray-900">Invoice</h1>
               <p className="text-2xl font-bold text-gray-700">
-                #{invoiceData.invoiceNumber}
+                #{newInvoiceData.invoiceNumber}
               </p>
             </div>
           </div>
@@ -241,11 +234,9 @@ const ViewInvoiceDialog: React.FC<ViewInvoiceDialogProps> = ({
             {/* Bill To */}
             <div>
               <div className="space-y-1 text-sm">
-                <p className="font-medium">
-                  {invoiceData.customer.companyName || "Company Name"}
-                </p>
-                <p>{invoiceData.customer.agentName || "Agent Name"}</p>
-                <p>{invoiceData.customer.email || "email@client.com"}</p>
+                <p className="font-medium">{newInvoiceData.companyName}</p>
+                <p>{newInvoiceData.agentName}</p>
+                <p>{newInvoiceData.agentEmail}</p>
               </div>
             </div>
 
@@ -254,15 +245,16 @@ const ViewInvoiceDialog: React.FC<ViewInvoiceDialogProps> = ({
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Villa</span>
-                  <span>{invoiceData.hotelName}</span>
+                  <span>{newInvoiceData.hotelName}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Guest Name</span>
-                  <span>{formatDate(invoiceData.checkInDate)}</span>
+                  <span>{newInvoiceData.guestName}</span>
                 </div>
+
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Period</span>
-                  <span>{formatDate(invoiceData.checkOutDate)}</span>
+                  <span className="text-gray-600">Check-In</span>
+                  <span>{newInvoiceData.checkInDate}</span>
                 </div>
               </div>
             </div>
@@ -272,15 +264,15 @@ const ViewInvoiceDialog: React.FC<ViewInvoiceDialogProps> = ({
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Invoice Date</span>
-                  <span>{formatDate(invoiceData.invoiceDate)}</span>
+                  <span>{newInvoiceData.invoiceDate}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Confirmation Number</span>
-                  <span>{invoiceData.bookingId}</span>
+                  <span className="text-gray-600">Sub Booking ID</span>
+                  <span>{newInvoiceData.subBookingId}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">COD</span>
-                  <span>{formatDate(invoiceData.checkOutDate)}</span>
+                  <span className="text-gray-600">Check-Out</span>
+                  <span>{newInvoiceData.checkOutDate}</span>
                 </div>
               </div>
             </div>
@@ -313,50 +305,24 @@ const ViewInvoiceDialog: React.FC<ViewInvoiceDialogProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
-                  <tr>
-                    <td className="px-4 py-3 text-sm">1.</td>
-                    <td className="px-4 py-3 text-sm">
-                      Room Costs - {invoiceData.roomType}
-                    </td>
-                    <td className="px-4 py-3 text-center text-sm">
-                      {invoiceData.numberOfNights}
-                    </td>
-                    <td className="px-4 py-3 text-center text-sm">Nights</td>
-                    <td className="px-4 py-3 text-right text-sm">
-                      {formatCurrency(
-                        invoiceData.subtotal / invoiceData.numberOfNights,
-                        invoiceData.currency
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-right text-sm font-medium">
-                      {formatCurrency(
-                        invoiceData.subtotal,
-                        invoiceData.currency
-                      )}
-                    </td>
-                  </tr>
-                  {invoiceData.serviceFee > 0 && (
-                    <tr>
-                      <td className="px-4 py-3 text-sm">2.</td>
-                      <td className="px-4 py-3 text-sm">
-                        Surcharge - Service Fee
+                  {newInvoiceData.items.map((item, index) => (
+                    <tr key={index}>
+                      <td className="px-4 py-3 text-sm">{index + 1}.</td>
+                      <td className="px-4 py-3 text-sm">{item.description}</td>
+                      <td className="px-4 py-3 text-center text-sm">
+                        {item.quantity}
                       </td>
-                      <td className="px-4 py-3 text-center text-sm">1</td>
-                      <td className="px-4 py-3 text-center text-sm">Item</td>
+                      <td className="px-4 py-3 text-center text-sm">
+                        {item.unit}
+                      </td>
                       <td className="px-4 py-3 text-right text-sm">
-                        {formatCurrency(
-                          invoiceData.serviceFee,
-                          invoiceData.currency
-                        )}
+                        {formatCurrency(item.price, "IDR")}
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-medium">
-                        {formatCurrency(
-                          invoiceData.serviceFee,
-                          invoiceData.currency
-                        )}
+                        {formatCurrency(item.total, "IDR")}
                       </td>
                     </tr>
-                  )}
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -365,36 +331,35 @@ const ViewInvoiceDialog: React.FC<ViewInvoiceDialogProps> = ({
           {/* Total Section */}
           <div className="flex justify-end">
             <div className="w-full max-w-sm space-y-2">
-              <div className="flex items-start justify-between border-b pb-2">
+              <div className="flex items-start justify-between pb-2">
                 <div>
                   <span className="text-lg font-medium text-gray-900">
                     Total Room Price
                   </span>
-                  <p className="mt-1 text-sm text-gray-600">
+                  {/* <p className="mt-1 text-sm text-gray-600">
                     {invoiceData.numberOfGuests} room(s),{" "}
                     {invoiceData.numberOfNights} night
-                  </p>
+                  </p> */}
                 </div>
                 <div className="text-right">
                   <div className="mb-1 flex items-center justify-end gap-2">
-                    <span className="flex items-center gap-1 rounded-full bg-gray-800 px-3 py-1 text-xs font-medium text-white">
-                      <IconRosetteDiscount size={14} />
-                      3D2NIGHT15
-                    </span>
                     <span className="text-sm text-gray-500 line-through">
-                      {formatCurrency(
-                        invoiceData.subtotal + invoiceData.serviceFee,
-                        invoiceData.currency
-                      )}
+                      {formatCurrency(newInvoiceData.totalBeforePromo, "IDR")}
                     </span>
                   </div>
                   <p className="text-2xl font-bold text-gray-900">
-                    {formatCurrency(
-                      invoiceData.totalAmount,
-                      invoiceData.currency
-                    )}
+                    {formatCurrency(newInvoiceData.totalPrice, "IDR")}
                   </p>
                 </div>
+              </div>
+              <div className="flex items-end justify-end">
+                <span className="flex items-center gap-1 rounded-full bg-gray-800 px-3 py-1 text-xs font-medium text-white">
+                  Promo
+                  <IconRosetteDiscount size={14} />
+                  <span className="font-semibold">
+                    {newInvoiceData.promo.promo_code}
+                  </span>
+                </span>
               </div>
             </div>
           </div>

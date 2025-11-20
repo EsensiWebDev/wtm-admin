@@ -50,9 +50,11 @@ export interface Invoice {
   guest: string;
   hotel: string;
   invoice_number: string;
+  invoice_date: string;
   promo: Promo;
   sub_booking_id: string;
   total_price: number;
+  total_before_promo: number;
 }
 
 export interface DescriptionInvoice {
