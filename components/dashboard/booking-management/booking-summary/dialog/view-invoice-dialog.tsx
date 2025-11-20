@@ -27,6 +27,7 @@ import { format, isValid } from "date-fns";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { NewInvoiceData } from "./new-invoice-pdf-document";
+import { UploadReceiptDialog } from "./upload-receipt-dialog";
 
 /**
  * Validates and formats a date string. Returns formatted date or error message.
@@ -87,6 +88,7 @@ const ViewInvoiceDialog: React.FC<ViewInvoiceDialogProps> = ({
     error: null,
     isLoading: false,
   });
+  const [uploadReceiptOpen, setUploadReceiptOpen] = useState(false);
 
   const invoice = bookingSummary?.invoice;
 
@@ -416,7 +418,10 @@ const ViewInvoiceDialog: React.FC<ViewInvoiceDialogProps> = ({
 
           {/* Action Buttons */}
           <div className="flex flex-col gap-3">
-            <Button className="w-full">
+            <Button
+              className="w-full"
+              onClick={() => setUploadReceiptOpen(true)}
+            >
               <IconCloudUpload /> Upload Payment Receipt
             </Button>
             <Button
@@ -439,6 +444,14 @@ const ViewInvoiceDialog: React.FC<ViewInvoiceDialogProps> = ({
           </div>
         </DialogFooter>
       </DialogContent>
+      <UploadReceiptDialog
+        open={uploadReceiptOpen}
+        onOpenChange={setUploadReceiptOpen}
+        subBookingId={newInvoiceData.subBookingId}
+        onSuccess={() => {
+          toast.success("Receipt uploaded successfully!");
+        }}
+      />
     </Dialog>
   );
 };

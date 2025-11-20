@@ -55,12 +55,14 @@ import {
 } from "@tabler/icons-react";
 import { Ban, MoreHorizontal } from "lucide-react";
 import ViewInvoiceDialog from "./view-invoice-dialog";
+import { UploadReceiptDialog } from "./upload-receipt-dialog";
 
 interface GetDetailBookingTableColumnsProps {
   setRowAction: React.Dispatch<
     React.SetStateAction<DataTableRowAction<BookingSummaryDetail> | null>
   >;
   bookingStatusOptions: Option[];
+  onUploadReceipt: (subBookingId: string) => void;
 }
 
 interface DetailBookingSummaryDialogProps
@@ -105,6 +107,7 @@ function NotesDialog({
 const getDetailBookingColumns = ({
   setRowAction,
   bookingStatusOptions,
+  onUploadReceipt,
 }: GetDetailBookingTableColumnsProps): ColumnDef<BookingSummaryDetail>[] => [
   {
     id: "no",
@@ -458,8 +461,7 @@ const getDetailBookingColumns = ({
       };
 
       const handleUploadReceipt = () => {
-        toast.info("Uploading receipt...");
-        // Implementation would open receipt viewer
+        onUploadReceipt(String(row.original.sub_booking_id));
       };
 
       const handleViewReceipt = () => {
@@ -527,6 +529,10 @@ export function DetailBookingSummaryDialog({
 }: DetailBookingSummaryDialogProps) {
   const [rowAction, setRowAction] =
     React.useState<DataTableRowAction<any> | null>(null);
+  const [uploadReceiptOpen, setUploadReceiptOpen] = React.useState(false);
+  const [selectedSubBookingId, setSelectedSubBookingId] = React.useState<
+    string | null
+  >(null);
   // State for server-side pagination and sorting
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
@@ -542,6 +548,10 @@ export function DetailBookingSummaryDialog({
       getDetailBookingColumns({
         setRowAction,
         bookingStatusOptions,
+        onUploadReceipt: (subBookingId: string) => {
+          setSelectedSubBookingId(subBookingId);
+          setUploadReceiptOpen(true);
+        },
       }),
     []
   );
@@ -581,6 +591,15 @@ export function DetailBookingSummaryDialog({
         bookingSummary={rowAction?.row.original ?? null}
         open={rowAction?.variant === "invoice"}
         onOpenChange={() => setRowAction(null)}
+      />
+      <UploadReceiptDialog
+        open={uploadReceiptOpen}
+        onOpenChange={setUploadReceiptOpen}
+        subBookingId={selectedSubBookingId ?? undefined}
+        onSuccess={() => {
+          setSelectedSubBookingId(null);
+          onSuccess?.();
+        }}
       />
     </>
   );

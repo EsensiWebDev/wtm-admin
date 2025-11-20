@@ -33,12 +33,14 @@ interface GetBookingSummaryTableColumnsProps {
   >;
   bookingStatusOptions: Option[];
   paymentStatusOptions: Option[];
+  onUploadReceipt: (bookingId: string) => void;
 }
 
 export function getBookingSummaryTableColumns({
   setRowAction,
   bookingStatusOptions,
   paymentStatusOptions,
+  onUploadReceipt,
 }: GetBookingSummaryTableColumnsProps): ColumnDef<BookingSummary>[] {
   return [
     {
@@ -399,18 +401,7 @@ export function getBookingSummaryTableColumns({
           return (
             <Button
               size={"sm"}
-              onClick={() => {
-                const promise = () =>
-                  new Promise((resolve) =>
-                    setTimeout(() => resolve({ name: "Sonner" }), 2000)
-                  );
-
-                toast.promise(promise, {
-                  loading: "Uploading...",
-                  success: "Receipt uploaded successfully",
-                  error: "Failed to upload receipt",
-                });
-              }}
+              onClick={() => onUploadReceipt(String(row.original.booking_id))}
             >
               <IconCloudUpload className="h-4 w-4" />
               Upload Receipt
