@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { formatUrl } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { Image as ImageIcon, Loader2, Star, Upload, X } from "lucide-react";
+import { Image as ImageIcon, Loader2, Upload, X } from "lucide-react";
 import React, { useCallback, useRef, useState } from "react";
 
 export interface ImageFile {
@@ -33,11 +33,12 @@ export function ImageUpload({
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false); // Track if component has been initialized
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Initialize images with existing images when component mounts
   React.useEffect(() => {
-    if (initialImages.length > 0 && images.length === 0) {
+    if (initialImages.length > 0 && images.length === 0 && !isInitialized) {
       const existingImages: ImageFile[] = initialImages.map((url, index) => ({
         id: `existing-${index}`,
         preview: formatUrl(url) || "",
@@ -46,8 +47,9 @@ export function ImageUpload({
       }));
       setImages(existingImages);
       onImagesChange(existingImages);
+      setIsInitialized(true); // Mark as initialized to prevent re-initialization
     }
-  }, [initialImages, images.length, onImagesChange]);
+  }, [initialImages, images.length, onImagesChange, isInitialized]);
 
   const validateFile = (file: File): string | null => {
     if (!acceptedTypes.includes(file.type)) {
@@ -342,17 +344,17 @@ export function ImageUpload({
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
 
                 {/* Main Image Badge */}
-                {image.isMain && (
+                {/* {image.isMain && (
                   <div className="absolute top-2 left-2 bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
                     <Star className="h-3 w-3" />
                     Main
                   </div>
-                )}
+                )} */}
 
                 {/* Actions */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <div className="flex gap-2">
-                    {!image.isMain && (
+                    {/* {!image.isMain && (
                       <Button
                         type="button"
                         size="sm"
@@ -362,7 +364,7 @@ export function ImageUpload({
                         <Star className="h-4 w-4 mr-1" />
                         Set Main
                       </Button>
-                    )}
+                    )} */}
                     <Button
                       type="button"
                       size="sm"

@@ -25,9 +25,15 @@ import { getRoomAvailabilityTableColumns } from "./room-availability-columns";
 import { Hotel } from "@/app/(dashboard)/hotel-listing/types";
 import { useQuery } from "@tanstack/react-query";
 import { RoomAvailabilityHotel } from "@/app/(dashboard)/hotel-listing/room-availability/types";
+import { getRegionOptions } from "@/server/general";
 
 interface RoomAvailabilityTableProps {
-  promises: Promise<[Awaited<ReturnType<typeof getData>>]>;
+  promises: Promise<
+    [
+      Awaited<ReturnType<typeof getData>>,
+      Awaited<ReturnType<typeof getRegionOptions>>
+    ]
+  >;
 }
 
 const monthYearParser = createParser({
@@ -42,7 +48,7 @@ const monthYearParser = createParser({
 
 const RoomAvailabilityTable = ({ promises }: RoomAvailabilityTableProps) => {
   const [isPending, startTransition] = useTransition();
-  const [{ data, pagination }] = React.use(promises);
+  const [{ data, pagination }, regionOptions] = React.use(promises);
   const [rowAction, setRowAction] =
     React.useState<DataTableRowAction<Hotel> | null>(null);
 
@@ -73,6 +79,7 @@ const RoomAvailabilityTable = ({ promises }: RoomAvailabilityTableProps) => {
     () =>
       getRoomAvailabilityTableColumns({
         setRowAction,
+        regionOptions,
       }),
     []
   );

@@ -1,3 +1,4 @@
+import { updateHotelStatus } from "@/app/(dashboard)/hotel-listing/actions";
 import { Hotel } from "@/app/(dashboard)/hotel-listing/types";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Badge } from "@/components/ui/badge";
@@ -9,12 +10,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { DataTableRowAction, Option } from "@/types/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, Cloud, CloudOff, Ellipsis, Text } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
+import { toast } from "sonner";
 
 interface GetHotelTableColumnsProps {
   setRowAction: React.Dispatch<
@@ -37,7 +46,7 @@ export function getHotelTableColumns({
       size: 40,
     },
     {
-      id: "hotel_name",
+      id: "search",
       accessorKey: "name",
       header: ({ column }) => (
         <DataTableColumnHeader
@@ -102,18 +111,61 @@ export function getHotelTableColumns({
         <DataTableColumnHeader column={column} title="Approval Status" />
       ),
       cell: ({ row }) => {
+        const [isUpdatePending, startUpdateTransition] = React.useTransition();
+        const status = row.original.status.toLowerCase();
+
+        const getStatusColor = (value: string) => {
+          if (value === "approved") return "text-green-600 bg-green-100";
+          if (value === "rejected") return "text-red-600 bg-red-100";
+          if (value === "in review") return "text-yellow-600 bg-yellow-100";
+          return "";
+        };
+
         return (
-          <Badge variant="default" className="capitalize">
-            {row.original.status}
-          </Badge>
+          <Select
+            defaultValue={status}
+            disabled={isUpdatePending}
+            onValueChange={(value) => {
+              startUpdateTransition(async () => {
+                const sendValue = value === "approved";
+
+                const fd = new FormData();
+                fd.append("status", String(sendValue));
+                fd.append("hotel_id", row.original.id);
+
+                const { success, message } = await updateHotelStatus(fd);
+
+                if (!success) {
+                  toast.error(message);
+                  return;
+                }
+                toast.success(message);
+              });
+            }}
+          >
+            <SelectTrigger
+              className={`w-38 rounded-full px-3 border-0 shadow-none **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate ${getStatusColor(
+                status
+              )}`}
+            >
+              <SelectValue placeholder="Change status" />
+            </SelectTrigger>
+            <SelectContent align="end">
+              <SelectItem value={"approved"}>Approved</SelectItem>
+              <SelectItem value={"in review"} disabled>
+                In Review
+              </SelectItem>
+              <SelectItem value={"rejected"}>Rejected</SelectItem>
+            </SelectContent>
+          </Select>
         );
       },
       enableHiding: false,
       enableSorting: false,
     },
     {
-      id: "api_status",
-      accessorKey: "api_status",
+      id: "is_api",
+      accessorKey: "is_api",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="API Status" />
       ),
@@ -129,8 +181,8 @@ export function getHotelTableColumns({
         placeholder: "Search API...",
         variant: "multiSelect",
         options: [
-          { label: "API", value: "api" },
-          { label: "Non API", value: "non_api" },
+          { label: "API", value: "true" },
+          { label: "Non API", value: "false" },
         ],
       },
       enableColumnFilter: true,

@@ -9,6 +9,7 @@ export const getData = async ({
   searchParams: SearchParams;
 }): Promise<ApiResponse<HistoryBookingLog[]>> => {
   const queryString = buildQueryParams(searchParams);
+
   const url = `/bookings/logs${queryString ? `?${queryString}` : ""}`;
   const apiResponse = await apiCall<HistoryBookingLog[]>(url);
 

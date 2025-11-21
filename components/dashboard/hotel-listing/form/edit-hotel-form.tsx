@@ -20,7 +20,7 @@ import {
   IconWorld,
 } from "@tabler/icons-react";
 import { Loader, MapPin, PlusCircle, Trash2 } from "lucide-react";
-import { useCallback, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -36,6 +36,7 @@ export const editHotelFormSchema = z.object({
       (files) => files.every((file) => file.size <= 2 * 1024 * 1024),
       "Each image must be less than 2MB"
     ),
+  unchanged_hotel_photos: z.array(z.string()).optional(),
   sub_district: z.string().min(1, "Sub district is required"),
   district: z.string().min(1, "District is required"),
   province: z.string().min(1, "Province is required"),
@@ -47,9 +48,11 @@ export const editHotelFormSchema = z.object({
       z.object({
         distance: z.number().int(),
         name: z.string().min(1, "Place name is required"),
+        id: z.number().int().optional(), // ID for existing places
       })
     )
     .optional(),
+  unchanged_nearby_place_ids: z.array(z.number().int()).optional(),
   facilities: z.array(z.string()).optional(),
   social_medias: z.array(
     z.object({
@@ -69,11 +72,21 @@ interface EditHotelFormProps {
 const EditHotelForm = ({ hotel, hotelId }: EditHotelFormProps) => {
   const [isPending, startTransition] = useTransition();
 
+  // Track original nearby places with their IDs for comparison
+  const [originalNearbyPlaces, setOriginalNearbyPlaces] = useState(
+    hotel.nearby_place?.map((place) => ({
+      id: place.id,
+      name: place.name,
+      distance: place.radius,
+    })) || []
+  );
+
   const form = useForm<EditHotelFormValues>({
     resolver: zodResolver(editHotelFormSchema),
     defaultValues: {
       name: hotel.name || "",
       photos: [],
+      unchanged_hotel_photos: hotel.photos || [],
       sub_district: hotel.sub_district || "",
       district: hotel.city || "",
       province: hotel.province || "",
@@ -82,24 +95,75 @@ const EditHotelForm = ({ hotel, hotelId }: EditHotelFormProps) => {
       rating: hotel.rating || 0,
       nearby_places:
         hotel.nearby_place?.map((place) => ({
+          id: place.id,
           name: place.name,
           distance: place.radius,
         })) || [],
+      unchanged_nearby_place_ids:
+        hotel.nearby_place?.map((place) => place.id) || [],
       facilities: hotel.facilities || [],
       social_medias: hotel.social_media || [],
     },
   });
 
+  // Reset form when hotel data changes (after successful update)
+  useEffect(() => {
+    const nearbyPlaces =
+      hotel.nearby_place?.map((place) => ({
+        id: place.id,
+        name: place.name,
+        distance: place.radius,
+      })) || [];
+
+    setOriginalNearbyPlaces(nearbyPlaces);
+
+    form.reset({
+      name: hotel.name || "",
+      photos: [],
+      unchanged_hotel_photos: hotel.photos || [],
+      sub_district: hotel.sub_district || "",
+      district: hotel.city || "",
+      province: hotel.province || "",
+      email: hotel.email || "",
+      description: hotel.description || "",
+      rating: hotel.rating || 0,
+      nearby_places: nearbyPlaces,
+      unchanged_nearby_place_ids:
+        hotel.nearby_place?.map((place) => place.id) || [],
+      facilities: hotel.facilities || [],
+      social_medias: hotel.social_media || [],
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hotel]);
+
   // Handle image uploads from ImageUpload component
   const handleImageChange = useCallback(
     (newImages: ImageFile[]) => {
-      // Extract File objects for form validation
-      const files = newImages
-        .filter((img) => img.file) // Only include newly uploaded files, not existing ones
+      // Separate new uploads from existing unchanged images
+      const newFiles = newImages
+        .filter((img) => img.file && !img.isExisting) // Only include newly uploaded files
         .map((img) => img.file) as File[];
-      form.setValue("photos", files);
+
+      // Map existing images back to their original URLs from hotel.photos
+      // ImageUpload component creates IDs like 'existing-0', 'existing-1', etc.
+      const unchangedUrls = newImages
+        .filter((img) => img.isExisting) // Only include existing images that weren't removed
+        .map((img) => {
+          // Extract the index from the ID (e.g., 'existing-0' -> 0)
+          const indexMatch = img.id.match(/^existing-(\d+)$/);
+          if (indexMatch && hotel.photos) {
+            const index = parseInt(indexMatch[1], 10);
+            // Return the original URL from hotel.photos without modification
+            return hotel.photos[index];
+          }
+          return null;
+        })
+        .filter((url): url is string => url !== null); // Remove null values
+
+      form.setValue("photos", newFiles);
+      form.setValue("unchanged_hotel_photos", unchangedUrls);
     },
-    [form]
+    [form, hotel.photos]
   );
 
   const handleNearbyUpdate = useCallback(
@@ -110,18 +174,65 @@ const EditHotelForm = ({ hotel, hotelId }: EditHotelFormProps) => {
       // Parse distance as integer, default to 0 if invalid
       const distance = place.distance ? parseInt(place.distance, 10) : 0;
 
+      // Check if this is an existing place (has ID)
+      const existingPlace = updatedNearbyPlaces[index];
+      const placeId = existingPlace?.id;
+
+      // Check if the place was modified
+      if (placeId !== undefined) {
+        const originalPlace = originalNearbyPlaces.find(
+          (p) => p.id === placeId
+        );
+        const isModified =
+          originalPlace &&
+          (originalPlace.name !== place.name ||
+            originalPlace.distance !== distance);
+
+        if (isModified) {
+          // Remove from unchanged list if it was modified
+          const unchangedIds =
+            form.getValues("unchanged_nearby_place_ids") || [];
+          form.setValue(
+            "unchanged_nearby_place_ids",
+            unchangedIds.filter((id) => id !== placeId)
+          );
+        } else {
+          // Add back to unchanged list if it matches original
+          const unchangedIds =
+            form.getValues("unchanged_nearby_place_ids") || [];
+          if (!unchangedIds.includes(placeId)) {
+            form.setValue("unchanged_nearby_place_ids", [
+              ...unchangedIds,
+              placeId,
+            ]);
+          }
+        }
+      }
+
       updatedNearbyPlaces[index] = {
         name: place.name,
         distance: isNaN(distance) ? 0 : distance,
+        id: placeId, // Preserve ID if it exists
       };
       form.setValue("nearby_places", updatedNearbyPlaces);
     },
-    [form]
+    [form, originalNearbyPlaces]
   );
 
   const handleNearbyRemove = useCallback(
     (index: number) => {
       const currentNearbyPlaces = form.getValues("nearby_places") || [];
+      const placeToRemove = currentNearbyPlaces[index];
+
+      // If the place has an ID, remove it from unchanged list
+      if (placeToRemove?.id !== undefined) {
+        const unchangedIds = form.getValues("unchanged_nearby_place_ids") || [];
+        form.setValue(
+          "unchanged_nearby_place_ids",
+          unchangedIds.filter((id) => id !== placeToRemove.id)
+        );
+      }
+
       const updatedNearbyPlaces = currentNearbyPlaces.filter(
         (_, i) => i !== index
       );
@@ -134,7 +245,7 @@ const EditHotelForm = ({ hotel, hotelId }: EditHotelFormProps) => {
     const currentNearbyPlaces = form.getValues("nearby_places") || [];
     form.setValue("nearby_places", [
       ...currentNearbyPlaces,
-      { name: "", distance: 0 },
+      { name: "", distance: 0 }, // New places don't have ID
     ]);
   }, [form]);
 
@@ -173,25 +284,59 @@ const EditHotelForm = ({ hotel, hotelId }: EditHotelFormProps) => {
         data.photos.forEach((photo) => {
           formData.append("photos", photo);
         });
+        if (
+          data.unchanged_hotel_photos &&
+          data.unchanged_hotel_photos.length > 0
+        ) {
+          data.unchanged_hotel_photos.forEach((photo) => {
+            formData.append("unchanged_hotel_photos", photo);
+          });
+        }
         formData.append("sub_district", data.sub_district);
         formData.append("district", data.district);
         formData.append("province", data.province);
         formData.append("email", data.email);
         if (data.description) formData.append("description", data.description);
         if (data.rating) formData.append("rating", String(data.rating));
-        formData.append("nearby_places", JSON.stringify(data.nearby_places));
+
+        // Process nearby places
+        const unchangedIds = data.unchanged_nearby_place_ids || [];
+        const allNearbyPlaces = data.nearby_places || [];
+
+        // Filter out unchanged places and prepare only new/modified ones
+        const nearbyPlacesToSend = allNearbyPlaces
+          .filter((place) => {
+            // Include if it's a new place (no ID) or modified (not in unchanged list)
+            return place.id === undefined || !unchangedIds.includes(place.id);
+          })
+          .map((place) => {
+            // Remove ID from all new/modified places - backend treats them equally
+            return { name: place.name, distance: place.distance };
+          });
+
+        formData.append("nearby_places", JSON.stringify(nearbyPlacesToSend));
+
+        // Send unchanged IDs separately
+        if (unchangedIds.length > 0) {
+          unchangedIds.forEach((id) => {
+            formData.append("unchanged_nearby_place_ids", String(id));
+          });
+        }
+
         data.facilities?.forEach((facility) => {
           formData.append("facilities", facility);
         });
         formData.append("social_medias", JSON.stringify(data.social_medias));
 
-        toast.promise(updateHotel(hotelId, formData), {
-          loading: "Updating hotel...",
-          success: ({ message }) => {
-            return message || `Hotel updated successfully!`;
-          },
-          error: "An unexpected error occurred. Please try again.",
-        });
+        const result = await updateHotel(hotelId, formData);
+
+        if (result.success) {
+          toast.success(result.message || "Hotel updated successfully!");
+        } else {
+          toast.error(
+            result.message || "An unexpected error occurred. Please try again."
+          );
+        }
       });
     },
     [hotelId]

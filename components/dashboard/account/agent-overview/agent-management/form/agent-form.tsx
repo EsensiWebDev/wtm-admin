@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { FileInputPreview } from "./file-input-preview";
 
 interface AgentFormProps<T extends FieldValues>
   extends Omit<React.ComponentPropsWithRef<"form">, "onSubmit"> {
@@ -47,7 +48,7 @@ export function AgentForm<T extends FieldValues>({
           name={"full_name" as FieldPath<T>}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Agent Name</FormLabel>
+              <FormLabel>Agent Name*</FormLabel>
               <FormControl>
                 <Input placeholder="Enter agent name" {...field} />
               </FormControl>
@@ -60,7 +61,7 @@ export function AgentForm<T extends FieldValues>({
           name={"agent_company" as FieldPath<T>}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Agent Company</FormLabel>
+              <FormLabel>Agent Company*</FormLabel>
               <FormControl>
                 <Input placeholder="Enter agent company" {...field} />
               </FormControl>
@@ -73,7 +74,7 @@ export function AgentForm<T extends FieldValues>({
           name={"promo_group_id" as FieldPath<T>}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Promo Group</FormLabel>
+              <FormLabel>Promo Group*</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger className="w-full">
@@ -104,7 +105,7 @@ export function AgentForm<T extends FieldValues>({
           name={"email" as FieldPath<T>}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>Email*</FormLabel>
               <FormControl>
                 <Input placeholder="Enter email" {...field} />
               </FormControl>
@@ -117,7 +118,7 @@ export function AgentForm<T extends FieldValues>({
           name={"phone" as FieldPath<T>}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Phone</FormLabel>
+              <FormLabel>Phone*</FormLabel>
               <FormControl>
                 <Input placeholder="Enter phone number" {...field} />
               </FormControl>
@@ -130,7 +131,7 @@ export function AgentForm<T extends FieldValues>({
           name={"kakao_talk_id" as FieldPath<T>}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Kakao Talk ID</FormLabel>
+              <FormLabel>Kakao Talk ID*</FormLabel>
               <FormControl>
                 <Input placeholder="Enter Kakao Talk ID" {...field} />
               </FormControl>
@@ -141,20 +142,17 @@ export function AgentForm<T extends FieldValues>({
         <FormField
           control={form.control}
           name={"photo_selfie" as FieldPath<T>}
-          render={({ field: { ref, name, onBlur, onChange } }) => (
+          render={({ field: { ref, name, onBlur, onChange, value } }) => (
             <FormItem>
-              <FormLabel>Agent Selfie Photo</FormLabel>
+              <FormLabel>Agent Selfie Photo*</FormLabel>
               <FormControl>
-                <Input
-                  type="file"
-                  accept="image/*"
+                <FileInputPreview
                   ref={ref}
                   name={name}
                   onBlur={onBlur}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    onChange(file);
-                  }}
+                  onChange={onChange}
+                  value={value}
+                  accept="image/*"
                 />
               </FormControl>
               <FormMessage />
@@ -164,20 +162,17 @@ export function AgentForm<T extends FieldValues>({
         <FormField
           control={form.control}
           name={"photo_id_card" as FieldPath<T>}
-          render={({ field: { ref, name, onBlur, onChange } }) => (
+          render={({ field: { ref, name, onBlur, onChange, value } }) => (
             <FormItem>
-              <FormLabel>Identity Card</FormLabel>
+              <FormLabel>Identity Card*</FormLabel>
               <FormControl>
-                <Input
-                  type="file"
-                  accept="image/*"
+                <FileInputPreview
                   ref={ref}
                   name={name}
                   onBlur={onBlur}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    onChange(file);
-                  }}
+                  onChange={onChange}
+                  value={value}
+                  accept="image/*"
                 />
               </FormControl>
               <FormMessage />
@@ -187,20 +182,17 @@ export function AgentForm<T extends FieldValues>({
         <FormField
           control={form.control}
           name={"certificate" as FieldPath<T>}
-          render={({ field: { ref, name, onBlur, onChange } }) => (
+          render={({ field: { ref, name, onBlur, onChange, value } }) => (
             <FormItem>
               <FormLabel>Certificate</FormLabel>
               <FormControl>
-                <Input
-                  type="file"
-                  accept="image/*"
+                <FileInputPreview
                   ref={ref}
                   name={name}
                   onBlur={onBlur}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    onChange(file);
-                  }}
+                  onChange={onChange}
+                  value={value}
+                  accept="image/*"
                 />
               </FormControl>
               <FormMessage />
@@ -210,27 +202,24 @@ export function AgentForm<T extends FieldValues>({
         <FormField
           control={form.control}
           name={"name_card" as FieldPath<T>}
-          render={({ field: { ref, name, onBlur, onChange } }) => (
+          render={({ field: { ref, name, onBlur, onChange, value } }) => (
             <FormItem>
-              <FormLabel>Name Card</FormLabel>
+              <FormLabel>Name Card*</FormLabel>
               <FormControl>
-                <Input
-                  type="file"
-                  accept="image/*"
+                <FileInputPreview
                   ref={ref}
                   name={name}
                   onBlur={onBlur}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    onChange(file);
-                  }}
+                  onChange={onChange}
+                  value={value}
+                  accept="image/*"
                 />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <FormField
+        {/* <FormField
           control={form.control}
           name={"is_active" as FieldPath<T>}
           render={({ field }) => (
@@ -249,7 +238,7 @@ export function AgentForm<T extends FieldValues>({
               </FormControl>
             </FormItem>
           )}
-        />
+        /> */}
         {children}
       </form>
     </Form>

@@ -82,11 +82,15 @@ export async function createHotelNew(formData: FormData) {
 }
 
 export async function updateHotel(hotelId: string, formData: FormData) {
+  console.log(formData);
+
   try {
     const response = await apiCall(`hotels/${hotelId}`, {
       method: "PUT",
       body: formData,
     });
+
+    console.log({ response });
 
     if (response.status !== 200) {
       return {
@@ -95,7 +99,8 @@ export async function updateHotel(hotelId: string, formData: FormData) {
       };
     }
 
-    revalidatePath("/hotel-listing", "layout");
+    revalidatePath(`/hotel-listing/${hotelId}/edit`, "page");
+    revalidatePath(`/hotel-listing`, "page");
 
     return {
       success: true,
@@ -120,16 +125,11 @@ export async function updateHotel(hotelId: string, formData: FormData) {
   }
 }
 
-export async function updateHotelStatus(hotelId: string, status: boolean) {
+export async function updateHotelStatus(formData: FormData) {
   try {
-    const body = {
-      hotel_id: Number(hotelId),
-      status,
-    };
-
-    const response = await apiCall(`hotels/${hotelId}`, {
+    const response = await apiCall(`hotels/status`, {
       method: "PUT",
-      body: JSON.stringify(body),
+      body: formData,
     });
 
     if (response.status !== 200) {
@@ -182,7 +182,10 @@ export async function createHotelRoomType(formData: FormData) {
       };
     }
 
-    revalidatePath("/hotel-listing/[slug]/edit", "layout");
+    const hotelId = formData.get("hotel_id") as string;
+    if (hotelId) {
+      revalidatePath(`/hotel-listing/${hotelId}/edit`, "page");
+    }
 
     return {
       success: true,
@@ -209,7 +212,13 @@ export async function createHotelRoomType(formData: FormData) {
   }
 }
 
-export async function updateHotelRoomType(roomId: string, formData: FormData) {
+export async function updateHotelRoomType(
+  roomId: string,
+  formData: FormData,
+  hotelId?: string
+) {
+  console.log({ formData });
+
   try {
     const response = await apiCall(`hotels/room-types/${roomId}`, {
       method: "PUT",
@@ -225,7 +234,9 @@ export async function updateHotelRoomType(roomId: string, formData: FormData) {
       };
     }
 
-    revalidatePath("/hotel-listing/[id]/edit", "layout");
+    if (hotelId) {
+      revalidatePath(`/hotel-listing/${hotelId}/edit`, "page");
+    }
 
     return {
       success: true,

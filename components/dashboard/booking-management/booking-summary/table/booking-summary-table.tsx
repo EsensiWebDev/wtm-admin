@@ -14,6 +14,7 @@ import React, { useTransition } from "react";
 import { DeleteBookingSummaryDialog } from "../dialog/delete-booking-summary-dialog";
 import { DetailBookingSummaryDialog } from "../dialog/detail-booking-summary-dialog";
 import EditBookingSummaryDialog from "../dialog/edit-booking-summary-dialog";
+import { UploadReceiptDialog } from "../dialog/upload-receipt-dialog";
 import { getBookingSummaryTableColumns } from "./booking-summary-columns";
 
 interface BookingSummaryTableProps {
@@ -32,8 +33,9 @@ const BookingSummaryTable = ({ promises }: BookingSummaryTableProps) => {
     React.use(promises);
   const [rowAction, setRowAction] =
     React.useState<DataTableRowAction<BookingSummary> | null>(null);
-
-  console.log({ data });
+  const [uploadReceiptOpen, setUploadReceiptOpen] = React.useState(false);
+  const [selectedBookingForReceipt, setSelectedBookingForReceipt] =
+    React.useState<{ bookingId?: string; subBookingId?: string } | null>(null);
 
   const columns = React.useMemo(
     () =>
@@ -41,6 +43,10 @@ const BookingSummaryTable = ({ promises }: BookingSummaryTableProps) => {
         setRowAction,
         bookingStatusOptions,
         paymentStatusOptions,
+        onUploadReceipt: (bookingId: string) => {
+          setSelectedBookingForReceipt({ bookingId });
+          setUploadReceiptOpen(true);
+        },
       }),
     []
   );
@@ -84,6 +90,16 @@ const BookingSummaryTable = ({ promises }: BookingSummaryTableProps) => {
         bookingSummary={rowAction?.row.original ? [rowAction.row.original] : []}
         showTrigger={false}
         onSuccess={() => rowAction?.row.toggleSelected(false)}
+      />
+      <UploadReceiptDialog
+        open={uploadReceiptOpen}
+        onOpenChange={setUploadReceiptOpen}
+        bookingId={selectedBookingForReceipt?.bookingId}
+        subBookingId={selectedBookingForReceipt?.subBookingId}
+        onSuccess={() => {
+          setSelectedBookingForReceipt(null);
+          startTransition(() => {});
+        }}
       />
     </>
   );

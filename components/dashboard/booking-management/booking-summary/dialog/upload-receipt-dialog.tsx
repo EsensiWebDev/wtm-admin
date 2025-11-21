@@ -1,7 +1,6 @@
 "use client";
 
-import { updateAccountProfilePhoto } from "@/app/(dashboard)/settings/account-setting/actions";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { uploadReceipt } from "@/app/(dashboard)/booking-management/booking-summary/actions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,60 +10,37 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import * as React from "react";
 import { toast } from "sonner";
 
-type ProfilePhotoUploaderProps = {
-  photoUrl?: string | null;
-  fullName?: string | null;
-};
+interface UploadReceiptDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  bookingId?: string;
+  subBookingId?: string;
+  onSuccess?: () => void;
+}
 
-const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
-export const ProfilePhotoUploader: React.FC<ProfilePhotoUploaderProps> = ({
-  photoUrl,
-  fullName,
+export const UploadReceiptDialog: React.FC<UploadReceiptDialogProps> = ({
+  open,
+  onOpenChange,
+  bookingId,
+  subBookingId,
+  onSuccess,
 }) => {
-  const router = useRouter();
-  const [open, setOpen] = React.useState(false);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const [previewDataUrl, setPreviewDataUrl] = React.useState<string | null>(
     null
   );
-  const [displayPhotoUrl, setDisplayPhotoUrl] = React.useState<
-    string | null | undefined
-  >(photoUrl);
   const [isPending, startTransition] = React.useTransition();
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
-  const queryClient = useQueryClient();
-
-  React.useEffect(() => {
-    setDisplayPhotoUrl(photoUrl);
-  }, [photoUrl]);
-
-  const initials = React.useMemo(() => {
-    if (!fullName) {
-      return "CN";
-    }
-    const parts = fullName.trim().split(/\s+/);
-    if (parts.length === 0) {
-      return "CN";
-    }
-    if (parts.length === 1) {
-      return parts[0]!.slice(0, 2).toUpperCase();
-    }
-    const first = parts[0]?.[0] ?? "";
-    const last = parts[parts.length - 1]?.[0] ?? "";
-    return `${first}${last}`.toUpperCase();
-  }, [fullName]);
 
   const resetSelection = React.useCallback(() => {
     setSelectedFile(null);
@@ -76,12 +52,12 @@ export const ProfilePhotoUploader: React.FC<ProfilePhotoUploaderProps> = ({
 
   const handleOpenChange = React.useCallback(
     (nextOpen: boolean) => {
-      setOpen(nextOpen);
+      onOpenChange(nextOpen);
       if (!nextOpen) {
         resetSelection();
       }
     },
-    [resetSelection]
+    [onOpenChange, resetSelection]
   );
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,7 +73,7 @@ export const ProfilePhotoUploader: React.FC<ProfilePhotoUploaderProps> = ({
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      toast.error("File size exceeds 1MB. Please choose a smaller image.");
+      toast.error("File size exceeds 2MB. Please choose a smaller image.");
       resetSelection();
       return;
     }
@@ -118,7 +94,7 @@ export const ProfilePhotoUploader: React.FC<ProfilePhotoUploaderProps> = ({
     reader.readAsDataURL(file);
   };
 
-  const handleSave = () => {
+  const handleUpload = () => {
     if (!selectedFile) {
       toast.error("Please select an image to upload.");
       return;
@@ -126,75 +102,49 @@ export const ProfilePhotoUploader: React.FC<ProfilePhotoUploaderProps> = ({
 
     startTransition(async () => {
       const formData = new FormData();
-      formData.append("photo_profile", selectedFile);
+      formData.append("receipt", selectedFile);
 
-      const { success, message } = await updateAccountProfilePhoto(formData);
+      if (bookingId) {
+        formData.append("booking_id", bookingId);
+      }
+
+      if (subBookingId) {
+        formData.append("sub_booking_id", subBookingId);
+      }
+
+      const { success, message } = await uploadReceipt(formData);
 
       if (!success) {
-        toast.error(message ?? "Failed to update profile photo.");
+        toast.error(message ?? "Failed to upload receipt.");
         return;
       }
 
-      toast.success(message ?? "Profile photo updated successfully.");
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
-      if (previewDataUrl) {
-        setDisplayPhotoUrl(previewDataUrl);
-      }
-      setOpen(false);
+      toast.success(message ?? "Receipt uploaded successfully.");
+      onSuccess?.();
+      handleOpenChange(false);
       resetSelection();
-      router.refresh();
     });
   };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <div className="relative">
-        <Avatar className="h-36 w-36 rounded-lg">
-          <AvatarImage src={displayPhotoUrl ?? ""} alt="Profile" />
-          <AvatarFallback className="rounded-lg text-lg">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-        <DialogTrigger asChild>
-          <Button
-            size="icon"
-            className="absolute -bottom-4 -right-4 rounded-full bg-[#2d3e3f] text-white hover:bg-[#223132]"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke="#fff"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M16.474 5.341a2.5 2.5 0 1 1 3.536 3.535M3 17.25V21h3.75l10.607-10.607a2.5 2.5 0 0 0-3.535-3.535L3 17.25Z"
-              />
-            </svg>
-          </Button>
-        </DialogTrigger>
-      </div>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Update profile photo</DialogTitle>
+          <DialogTitle>Upload Payment Receipt</DialogTitle>
           <DialogDescription>
-            Choose a JPG, PNG, or WEBP image that is no larger than 1MB.
+            Choose a JPG, PNG, or WEBP image that is no larger than 2MB.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4 py-2">
           <div className="flex justify-center">
-            <div className="relative h-40 w-40 overflow-hidden rounded-lg border bg-muted">
-              {previewDataUrl || displayPhotoUrl ? (
+            <div className="relative h-60 w-full overflow-hidden rounded-lg border bg-muted">
+              {previewDataUrl ? (
                 <Image
-                  src={(previewDataUrl ?? displayPhotoUrl) as string}
-                  alt="Selected profile preview"
+                  src={previewDataUrl}
+                  alt="Selected receipt preview"
                   fill
-                  sizes="160px"
-                  className="object-cover"
+                  sizes="(max-width: 448px) 100vw, 448px"
+                  className="object-contain"
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
@@ -204,16 +154,16 @@ export const ProfilePhotoUploader: React.FC<ProfilePhotoUploaderProps> = ({
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="profile-photo-input">Upload image</Label>
+            <Label htmlFor="receipt-input">Upload receipt</Label>
             <Input
               ref={fileInputRef}
-              id="profile-photo-input"
+              id="receipt-input"
               type="file"
               accept="image/png,image/jpeg,image/jpg,image/webp"
               onChange={handleFileChange}
             />
             <p className="text-xs text-muted-foreground">
-              Maximum size 1MB. Accepted formats: JPG, PNG, WEBP.
+              Maximum size 2MB. Accepted formats: JPG, PNG, WEBP.
             </p>
           </div>
         </div>
@@ -230,11 +180,11 @@ export const ProfilePhotoUploader: React.FC<ProfilePhotoUploaderProps> = ({
           </DialogClose>
           <Button
             type="button"
-            onClick={handleSave}
+            onClick={handleUpload}
             disabled={isPending || !selectedFile}
           >
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save changes
+            Upload Receipt
           </Button>
         </DialogFooter>
       </DialogContent>

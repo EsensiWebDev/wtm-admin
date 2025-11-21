@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  getBedTypeOptionsByRoomTypeId,
-  getRoomTypeOptionsByHotelId,
-} from "@/app/(dashboard)/promo/fetch";
+import { getRoomTypeOptionsByHotelId } from "@/app/(dashboard)/promo/fetch";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -81,28 +78,140 @@ export function PromoForm<T extends FieldValues>({
   // Get selected room type ID
   const selectedRoomTypeId = form.watch("room_type_id" as FieldPath<T>);
 
-  // Fetch bed types based on selected room type
-  const {
-    data: bedTypeOptions,
-    isLoading: isLoadingBedTypes,
-    isError: isErrorBedTypes,
-  } = useQuery({
-    queryKey: ["bed-type-options", selectedRoomTypeId],
-    queryFn: async () => {
-      if (!selectedRoomTypeId) return [];
-      return getBedTypeOptionsByRoomTypeId(selectedRoomTypeId);
-    },
-    enabled: !!selectedRoomTypeId,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: 2,
-  });
-
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         className="flex flex-col gap-6"
       >
+        {/* Fourth Row: Hotel Name, Room Type, Bed Type, Nights */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <FormField
+            control={form.control}
+            name={"hotel_name" as FieldPath<T>}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Hotel Name</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  disabled={isLoadingHotels}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      {isLoadingHotels ? (
+                        <div className="flex items-center">
+                          <LoadingSpinner className="mr-2 h-4 w-4" />
+                          Loading hotels...
+                        </div>
+                      ) : (
+                        <SelectValue placeholder="Select hotel" />
+                      )}
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {isLoadingHotels ? (
+                      <SelectItem value="loading" disabled>
+                        Loading hotels...
+                      </SelectItem>
+                    ) : isErrorHotels ? (
+                      <SelectItem value="error" disabled>
+                        Failed to load hotels
+                      </SelectItem>
+                    ) : hotelOptions && hotelOptions.length > 0 ? (
+                      hotelOptions.map((hotel) => (
+                        <SelectItem key={hotel.value} value={hotel.value}>
+                          {hotel.label}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-hotels" disabled>
+                        No hotels available
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name={"room_type_id" as FieldPath<T>}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Room Type</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  disabled={isLoadingRoomTypes || !selectedHotelId}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      {isLoadingRoomTypes && selectedHotelId ? (
+                        <div className="flex items-center">
+                          <LoadingSpinner className="mr-2 h-4 w-4" />
+                          Loading room types...
+                        </div>
+                      ) : (
+                        <SelectValue placeholder="Select room type" />
+                      )}
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {isLoadingRoomTypes && selectedHotelId ? (
+                      <SelectItem value="loading" disabled>
+                        Loading room types...
+                      </SelectItem>
+                    ) : isErrorRoomTypes ? (
+                      <SelectItem value="error" disabled>
+                        Failed to load room types
+                      </SelectItem>
+                    ) : roomTypeOptions && roomTypeOptions.length > 0 ? (
+                      roomTypeOptions.map((roomType) => (
+                        <SelectItem
+                          key={roomType.value}
+                          value={String(roomType.value)}
+                        >
+                          {roomType.label}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-room-types" disabled>
+                        {selectedHotelId
+                          ? "No room types available"
+                          : "Select a hotel first"}
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name={"total_night" as FieldPath<T>}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nights</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="1"
+                    placeholder="Enter nights"
+                    {...field}
+                    onChange={(e) =>
+                      field.onChange(parseInt(e.target.value) || 1)
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         {/* First Row: Promo Name, Promo Type, Extra Input Based on Promo Type */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FormField
@@ -209,20 +318,31 @@ export function PromoForm<T extends FieldValues>({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="deluxe_room">Deluxe Room</SelectItem>
-                      <SelectItem value="superior_room">
-                        Superior Room
-                      </SelectItem>
-                      <SelectItem value="executive_suite">
-                        Executive Suite
-                      </SelectItem>
-                      <SelectItem value="presidential_suite">
-                        Presidential Suite
-                      </SelectItem>
-                      <SelectItem value="business_room">
-                        Business Room
-                      </SelectItem>
-                      <SelectItem value="family_room">Family Room</SelectItem>
+                      {isLoadingRoomTypes && selectedHotelId ? (
+                        <SelectItem value="loading" disabled>
+                          Loading room types...
+                        </SelectItem>
+                      ) : isErrorRoomTypes ? (
+                        <SelectItem value="error" disabled>
+                          Failed to load room types
+                        </SelectItem>
+                      ) : roomTypeOptions && roomTypeOptions.length > 0 ? (
+                        roomTypeOptions.map((roomType) => (
+                          <SelectItem
+                            key={roomType.value}
+                            value={String(roomType.value)}
+                            disabled={roomType.value === selectedRoomTypeId}
+                          >
+                            {roomType.label}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no-room-types" disabled>
+                          {selectedHotelId
+                            ? "No room types available"
+                            : "Select a hotel first"}
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -367,182 +487,6 @@ export function PromoForm<T extends FieldValues>({
                     />
                   </PopoverContent>
                 </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Fourth Row: Hotel Name, Room Type, Bed Type, Nights */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <FormField
-            control={form.control}
-            name={"hotel_name" as FieldPath<T>}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Hotel Name</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  disabled={isLoadingHotels}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      {isLoadingHotels ? (
-                        <div className="flex items-center">
-                          <LoadingSpinner className="mr-2 h-4 w-4" />
-                          Loading hotels...
-                        </div>
-                      ) : (
-                        <SelectValue placeholder="Select hotel" />
-                      )}
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {isLoadingHotels ? (
-                      <SelectItem value="loading" disabled>
-                        Loading hotels...
-                      </SelectItem>
-                    ) : isErrorHotels ? (
-                      <SelectItem value="error" disabled>
-                        Failed to load hotels
-                      </SelectItem>
-                    ) : hotelOptions && hotelOptions.length > 0 ? (
-                      hotelOptions.map((hotel) => (
-                        <SelectItem key={hotel.value} value={hotel.value}>
-                          {hotel.label}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="no-hotels" disabled>
-                        No hotels available
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name={"room_type_id" as FieldPath<T>}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Room Type</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value}
-                  disabled={isLoadingRoomTypes || !selectedHotelId}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      {isLoadingRoomTypes && selectedHotelId ? (
-                        <div className="flex items-center">
-                          <LoadingSpinner className="mr-2 h-4 w-4" />
-                          Loading room types...
-                        </div>
-                      ) : (
-                        <SelectValue placeholder="Select room type" />
-                      )}
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {isLoadingRoomTypes && selectedHotelId ? (
-                      <SelectItem value="loading" disabled>
-                        Loading room types...
-                      </SelectItem>
-                    ) : isErrorRoomTypes ? (
-                      <SelectItem value="error" disabled>
-                        Failed to load room types
-                      </SelectItem>
-                    ) : roomTypeOptions && roomTypeOptions.length > 0 ? (
-                      roomTypeOptions.map((roomType) => (
-                        <SelectItem key={roomType.value} value={roomType.value}>
-                          {roomType.label}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="no-room-types" disabled>
-                        {selectedHotelId
-                          ? "No room types available"
-                          : "Select a hotel first"}
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name={"bed_type" as FieldPath<T>}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Bed Type</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value}
-                  disabled={isLoadingBedTypes || !selectedRoomTypeId}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      {isLoadingBedTypes && selectedRoomTypeId ? (
-                        <div className="flex items-center">
-                          <LoadingSpinner className="mr-2 h-4 w-4" />
-                          Loading bed types...
-                        </div>
-                      ) : (
-                        <SelectValue placeholder="Select bed type" />
-                      )}
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {isLoadingBedTypes && selectedRoomTypeId ? (
-                      <SelectItem value="loading" disabled>
-                        Loading bed types...
-                      </SelectItem>
-                    ) : isErrorBedTypes ? (
-                      <SelectItem value="error" disabled>
-                        Failed to load bed types
-                      </SelectItem>
-                    ) : bedTypeOptions && bedTypeOptions.length > 0 ? (
-                      bedTypeOptions.map((bedType) => (
-                        <SelectItem key={bedType.value} value={bedType.value}>
-                          {bedType.label}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="no-bed-types" disabled>
-                        {selectedRoomTypeId
-                          ? "No bed types available"
-                          : "Select a room type first"}
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name={"total_night" as FieldPath<T>}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nights</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min="1"
-                    placeholder="Enter nights"
-                    {...field}
-                    onChange={(e) =>
-                      field.onChange(parseInt(e.target.value) || 1)
-                    }
-                  />
-                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
